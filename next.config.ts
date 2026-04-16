@@ -1,0 +1,98 @@
+import withBundleAnalyzer from "@next/bundle-analyzer";
+import { withSentryConfig } from "@sentry/nextjs";
+import withPWA, { runtimeCaching } from "@ducanh2912/next-pwa";
+import type { NextConfig } from "next";
+import "./src/libs/Env";
+
+// Define the base Next.js configuration
+const baseConfig: NextConfig = {
+  devIndicators: {
+    position: "bottom-right",
+  },
+  poweredByHeader: false,
+  reactStrictMode: true,
+  reactCompiler: process.env.NODE_ENV === "production", // Keep the development environment fast
+  outputFileTracingIncludes: {
+    "/": ["./migrations/**/*"],
+  },
+};
+
+// Initialize the Next-Intl plugin
+let configWithPlugins = baseConfig;
+// Conditionally enable bundle analysis
+if (process.env.ANALYZE === "true") {
+  configWithPlugins = withBundleAnalyzer()(configWithPlugins);
+}
+
+// Conditionally enable Sentry configuration
+if (!process.env.NEXT_PUBLIC_SENTRY_DISABLED) {
+  configWithPlugins = withSentryConfig(configWithPlugins, {
+    // For all available options, see:
+    // https://www.npmjs.com/package/@sentry/webpack-plugin#options
+    org: process.env.SENTRY_ORGANIZATION,
+    project: process.env.SENTRY_PROJECT,
+
+    // Only print logs for uploading source maps in CI
+    silent: !process.env.CI,
+
+    // For all available options, see:
+    // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+
+    // Upload a larger set of source maps for prettier stack traces (increases build time)
+    widenClientFileUpload: true,
+
+    // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
+    // This can increase your server load as well as your hosting bill.
+    // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
+    // side errors will fail.
+    tunnelRoute: "/monitoring",
+
+    webpack: {
+      reactComponentAnnotation: {
+        enabled: true,
+      },
+
+      // Tree-shake Sentry logger statements to reduce bundle size
+      treeshake: {
+        removeDebugLogging: true,
+      },
+    },
+
+    // Disable Sentry telemetry
+    telemetry: false,
+  });
+}
+
+const pwaPlugin = withPWA({
+  dest: "public",
+  disable: process.env.NODE_ENV === "development",
+  register: true,
+  cacheOnFrontEndNav: true,
+  fallbacks: {
+    document: "/_offline",
+  },
+  workboxOptions: {
+    runtimeCaching: [
+      ...runtimeCaching,
+      {
+        urlPattern: /\/(dashboard|scan|chat)(\/)?$/,
+        handler: "NetworkFirst",
+        options: {
+          cacheName: "app-auth-pages",
+          networkTimeoutSeconds: 4,
+          expiration: {
+            maxEntries: 24,
+            maxAgeSeconds: 24 * 60 * 60,
+          },
+          cacheableResponse: {
+            statuses: [0, 200],
+          },
+        },
+      },
+    ],
+  },
+  extendDefaultRuntimeCaching: true,
+});
+
+const nextConfig = pwaPlugin(configWithPlugins);
+export default nextConfig;
