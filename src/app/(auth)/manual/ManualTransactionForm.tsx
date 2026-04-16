@@ -31,27 +31,27 @@ export function ManualTransactionForm(
           Jenis Transaksi
         </legend>
         <div className="grid grid-cols-2 gap-4">
-          <label className="flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-border p-3 focus-within:ring-2 focus-within:ring-primary hover:bg-muted">
+          <label className="flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-border p-3 text-foreground focus-within:ring-2 focus-within:ring-primary hover:bg-muted has-[input:checked]:border-primary has-[input:checked]:bg-primary has-[input:checked]:text-primary-foreground">
             <input
               type="radio"
               name="type"
               value="INCOME"
-              className="peer sr-only"
+              className="sr-only"
               required
             />
-            <span className="w-full rounded-lg border border-transparent bg-transparent px-3 py-2 text-center text-base font-semibold text-foreground transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground">
+            <span className="w-full rounded-lg px-3 py-2 text-center text-base font-semibold transition-colors">
               Pemasukan
             </span>
           </label>
-          <label className="flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-border p-3 focus-within:ring-2 focus-within:ring-primary hover:bg-muted">
+          <label className="flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-border p-3 text-foreground focus-within:ring-2 focus-within:ring-primary hover:bg-muted has-[input:checked]:border-primary has-[input:checked]:bg-primary has-[input:checked]:text-primary-foreground">
             <input
               type="radio"
               name="type"
               value="EXPENSE"
-              className="peer sr-only"
+              className="sr-only"
               required
             />
-            <span className="w-full rounded-lg border border-transparent bg-transparent px-3 py-2 text-center text-base font-semibold text-foreground transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground">
+            <span className="w-full rounded-lg px-3 py-2 text-center text-base font-semibold transition-colors">
               Pengeluaran
             </span>
           </label>
