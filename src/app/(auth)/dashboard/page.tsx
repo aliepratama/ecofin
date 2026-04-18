@@ -58,12 +58,17 @@ export default async function DashboardPage() {
     activeBusiness,
   );
 
-  let insights = null;
-  try {
-    insights = await getDashboardInsights();
-  } catch (err) {
-    console.error(err);
-  }
+  // Jangan blokir render awal dengan call AI. Pindahkan fetching AI ke komponen Client (SWR/React Query) atau buang await di atas.
+  // Untuk sementara, kita berikan default loading atau disable call AI di server agar tidak delay 5-10 detik:
+  
+  // let insights = null;
+  // try {
+  //   insights = await getDashboardInsights(); // INI PENYEBAB DELAY
+  // } catch (err) {
+  //   console.error(err);
+  // }
+
+  const insights = null; // AI Insight dimatikan sementara di SSR agar login instan
 
   const plText =
     insights?.plForecastText ||
