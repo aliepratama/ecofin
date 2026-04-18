@@ -17,6 +17,9 @@ export const updateSession = async (request: NextRequest) => {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
+        cookieOptions: {
+          name: 'ecofin-auth-token',
+        },
         cookies: {
           getAll() {
             return request.cookies.getAll();
@@ -26,7 +29,9 @@ export const updateSession = async (request: NextRequest) => {
               request.cookies.set(name, value)
             );
             response = NextResponse.next({
-              request,
+              request: {
+                headers: request.headers,
+              },
             });
             cookiesToSet.forEach(({ name, value, options }) =>
               response.cookies.set(name, value, options)

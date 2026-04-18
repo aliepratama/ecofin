@@ -9,15 +9,15 @@ const getAuthOptions = () => {
     return {
       project: Env.VERTEX_PROJECT_ID,
       location: Env.VERTEX_LOCATION,
-      googleAuthOptions: { credentials }
+      googleAuthOptions: { credentials },
     };
   }
-  
+
   // Jika di Local (menggunakan path fail)
   return {
     project: Env.VERTEX_PROJECT_ID,
     location: Env.VERTEX_LOCATION,
-    // Secara automatik Google SDK akan mencari fail yang 
+    // Secara automatik Google SDK akan mencari fail yang
     // dinyatakan dalam GOOGLE_APPLICATION_CREDENTIALS di .env.local
   };
 };
