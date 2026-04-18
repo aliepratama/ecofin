@@ -29,6 +29,13 @@
       "when": 1776299400000,
       "tag": "0003_stakeholder_invites",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776468430256,
+      "tag": "0004_lucky_vampiro",
+      "breakpoints": true
     }
   ]
 }

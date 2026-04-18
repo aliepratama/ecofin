@@ -3,6 +3,7 @@
 import { and, desc, eq, inArray, gte } from "drizzle-orm";
 import { db } from "@/libs/DB";
 import { createClient } from "@/libs/supabase/server";
+import { redirect } from "next/navigation";
 import {
   businesses,
   creditScores,
@@ -10,6 +11,12 @@ import {
   stakeholders,
   transactions,
 } from "@/models/Schema";
+
+export async function signOutAction() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/login");
+}
 
 type BusinessAggregate = {
   businessId: string;
@@ -20,6 +27,7 @@ type BusinessAggregate = {
   transactionCount: number;
   aiValidationRatio: number;
   trustScore: number | null;
+  monthlyTrend: MonthlyAggregate[];
 };
 
 type MonthlyAggregate = {
@@ -30,6 +38,8 @@ type MonthlyAggregate = {
 
 export type StakeholderPortfolioAnalytics = {
   institutionName: string;
+  minMediumTrustScore: number;
+  minHighTrustScore: number;
   linkedBusinesses: BusinessAggregate[];
   portfolioRevenue: number;
   portfolioExpense: number;
@@ -52,6 +62,35 @@ async function getAuthenticatedUserId() {
   return user.id;
 }
 
+export async function updateTrustScoreSettingsAction(formData: FormData) {
+  const userId = await getAuthenticatedUserId();
+  const minMedium = parseInt(formData.get("minMedium") as string, 10);
+  const minHigh = parseInt(formData.get("minHigh") as string, 10);
+
+  if (isNaN(minMedium) || isNaN(minHigh) || minMedium >= minHigh) {
+    throw new Error("Range nilai tidak valid.");
+  }
+
+  await db
+    .update(stakeholders)
+    .set({ minMediumTrustScore: minMedium, minHighTrustScore: minHigh })
+    .where(eq(stakeholders.userId, userId));
+}
+
+export async function updateInstitutionNameAction(formData: FormData) {
+  const userId = await getAuthenticatedUserId();
+  const institutionName = formData.get("institutionName")?.toString().trim();
+
+  if (!institutionName || institutionName.length < 3) {
+    throw new Error("Nama institusi minimal 3 karakter");
+  }
+
+  await db
+    .update(stakeholders)
+    .set({ institutionName })
+    .where(eq(stakeholders.userId, userId));
+}
+
 export async function getStakeholderPortfolioAnalyticsAction(): Promise<StakeholderPortfolioAnalytics> {
   const userId = await getAuthenticatedUserId();
 
@@ -62,6 +101,8 @@ export async function getStakeholderPortfolioAnalyticsAction(): Promise<Stakehol
   if (!stakeholder) {
     return {
       institutionName: "",
+      minMediumTrustScore: 40,
+      minHighTrustScore: 70,
       linkedBusinesses: [],
       portfolioRevenue: 0,
       portfolioExpense: 0,
@@ -79,6 +120,8 @@ export async function getStakeholderPortfolioAnalyticsAction(): Promise<Stakehol
   if (links.length === 0) {
     return {
       institutionName: stakeholder.institutionName,
+      minMediumTrustScore: stakeholder.minMediumTrustScore,
+      minHighTrustScore: stakeholder.minHighTrustScore,
       linkedBusinesses: [],
       portfolioRevenue: 0,
       portfolioExpense: 0,
@@ -144,6 +187,31 @@ export async function getStakeholderPortfolioAnalyticsAction(): Promise<Stakehol
           ? Math.round((aiValidatedCount / transactionCount) * 100)
           : 0;
 
+      const itemMonthlyMap = new Map<string, MonthlyAggregate>();
+      for (const transaction of items) {
+        const monthKey = transaction.date.toLocaleDateString("id-ID", {
+          month: "short",
+          year: "numeric",
+        });
+
+        if (!itemMonthlyMap.has(monthKey)) {
+          itemMonthlyMap.set(monthKey, {
+            month: monthKey,
+            revenue: 0,
+            expense: 0,
+          });
+        }
+        const row = itemMonthlyMap.get(monthKey);
+        if (row) {
+          if (transaction.type === "INCOME") {
+            row.revenue += Number(transaction.totalAmount);
+          } else {
+            row.expense += Number(transaction.totalAmount);
+          }
+        }
+      }
+      const monthlyTrend = Array.from(itemMonthlyMap.values()).reverse();
+
       return {
         businessId: business.id,
         businessName: business.name,
@@ -153,6 +221,7 @@ export async function getStakeholderPortfolioAnalyticsAction(): Promise<Stakehol
         transactionCount,
         aiValidationRatio,
         trustScore: latestScoreMap.get(business.id) ?? null,
+        monthlyTrend,
       };
     },
   );
@@ -221,6 +290,8 @@ export async function getStakeholderPortfolioAnalyticsAction(): Promise<Stakehol
 
   return {
     institutionName: stakeholder.institutionName,
+    minMediumTrustScore: stakeholder.minMediumTrustScore,
+    minHighTrustScore: stakeholder.minHighTrustScore,
     linkedBusinesses,
     portfolioRevenue,
     portfolioExpense,

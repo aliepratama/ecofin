@@ -43,6 +43,7 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
       className={cn("font-sans", geist.variable)}
+      data-theme="light"
     >
       <body
         className="min-h-screen bg-background font-sans antialiased"
@@ -50,8 +51,8 @@ export default function RootLayout({
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           {children}

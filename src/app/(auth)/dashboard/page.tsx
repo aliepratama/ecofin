@@ -2,9 +2,10 @@ import { eq, desc } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/libs/DB";
 import { createClient } from "@/libs/supabase/server";
-import { transactions, businesses } from "@/models/Schema";
+import { transactions, businesses, stakeholders } from "@/models/Schema";
 import { calculateTrustScore } from "@/libs/scoring/TrustScore";
 import { DashboardCharts } from "./DashboardCharts";
+import { getDashboardInsights } from "./actions";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -16,6 +17,15 @@ export default async function DashboardPage() {
   }
 
   const userId = user.id;
+
+  // Cek apakah ybs adalah stakeholder
+  const activeStakeholder = await db.query.stakeholders.findFirst({
+    where: eq(stakeholders.userId, userId),
+  });
+
+  if (activeStakeholder) {
+    redirect("/stakeholder/dashboard");
+  }
 
   // Cek UMKM pertama milik user
   const activeBusiness = await db.query.businesses.findFirst({
@@ -47,6 +57,21 @@ export default async function DashboardPage() {
     recentTransactions as any,
     activeBusiness,
   );
+
+  let insights = null;
+  try {
+    insights = await getDashboardInsights();
+  } catch (err) {
+    console.error(err);
+  }
+
+  const plText =
+    insights?.plForecastText ||
+    "Berdasarkan penjualan minggu ini, laba bersih akhir bulan diproyeksi stabil. Anda berada di jalur aman.";
+  const plProgress = insights?.plForecastProgress || 80;
+  const demandText =
+    insights?.demandForecastText ||
+    "Prediksi cuaca cerah dan histori penjualan baik. Tingkatkan stok untuk menghadapi potensi keramaian.";
 
   const getTransactionLabel = (inputMethod: string) => {
     if (inputMethod === "OCR") {
@@ -87,7 +112,7 @@ export default async function DashboardPage() {
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:space-y-8 lg:px-8">
         {/* Quick Actions */}
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:mb-8 sm:grid-cols-4 sm:gap-4">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:mb-8 sm:grid-cols-5 sm:gap-4">
           <a
             href="/chat"
             className="flex min-h-28 flex-col items-center justify-center rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40"
@@ -134,6 +159,48 @@ export default async function DashboardPage() {
             </svg>
             <span className="mt-2 text-center text-sm font-semibold text-foreground">
               Scan Nota (AI)
+            </span>
+          </a>
+          <a
+            href="/dashboard/products"
+            className="flex min-h-28 flex-col items-center justify-center rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40"
+          >
+            <svg
+              className="h-6 w-6 text-foreground"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 10h16M4 14h16M4 18h16"
+              />
+            </svg>
+            <span className="mt-2 text-center text-sm font-semibold text-foreground">
+              Menu & Bahan
+            </span>
+          </a>
+          <a
+            href="/dashboard/produksi"
+            className="flex min-h-28 flex-col items-center justify-center rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40"
+          >
+            <svg
+              className="h-6 w-6 text-foreground"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+            <span className="mt-2 text-center text-sm font-semibold text-foreground">
+              Rencana Masak
             </span>
           </a>
           <a
@@ -285,10 +352,7 @@ export default async function DashboardPage() {
               </h3>
             </div>
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-              Berdasarkan run-rate penjualan Anda minggu ini yang mencapai Rp
-              450rb/hari, AI memproyeksikan laba bersih akhir bulan mencapai{" "}
-              <span className="font-bold text-foreground">Rp 4.200.000</span>.
-              Anda berada di jalur aman.
+              {plText}
             </p>
             <div className="mt-6 flex items-center justify-between text-sm font-medium text-foreground">
               <span className="text-muted-foreground">Awal Bulan</span>
@@ -297,7 +361,7 @@ export default async function DashboardPage() {
             <div className="mt-2 h-3 w-full overflow-hidden rounded-full border border-border bg-muted">
               <div
                 className="h-full rounded-full bg-foreground"
-                style={{ width: "80%" }}
+                style={{ width: `${plProgress}%` }}
               />
             </div>
           </div>
@@ -325,12 +389,9 @@ export default async function DashboardPage() {
               </div>
               <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
                 <span className="font-bold text-foreground">
-                  Akhir Pekan Ini (Bantul Event):
+                  Rekomendasi AI:
                 </span>{" "}
-                Diprediksi cuaca cerah di hari Sabtu dan ada event lokal di
-                alun-alun. Tingkatkan stok beras & ayam goreng{" "}
-                <span className="font-bold text-foreground">15%</span> untuk
-                menghindari kehabisan.
+                {demandText}
               </p>
             </div>
             <button className="mt-6 inline-flex w-fit items-center justify-center rounded-lg border border-border bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-foreground/90">

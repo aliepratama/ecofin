@@ -1,5 +1,4 @@
-import { ModeToggle } from '@/components/ModeToggle';
-import { AppConfig } from '@/utils/AppConfig';
+import { AppConfig } from "@/utils/AppConfig";
 
 export const BaseTemplate = (props: {
   leftNav: React.ReactNode;
@@ -20,13 +19,12 @@ export const BaseTemplate = (props: {
           </nav>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <nav>
-            <ul className="flex flex-wrap items-center gap-x-4 text-sm font-medium">
+            <ul className="flex flex-wrap items-center gap-x-2 sm:gap-x-4 text-sm font-medium">
               {props.rightNav}
             </ul>
           </nav>
-          <ModeToggle />
         </div>
       </div>
     </header>
@@ -36,7 +34,8 @@ export const BaseTemplate = (props: {
     <footer className="border-t py-6 md:py-0">
       <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 md:h-14 md:flex-row">
         <p className="text-sm leading-loose text-muted-foreground">
-          © {new Date().getFullYear()} {AppConfig.name}. Dibuat untuk memajukan UMKM Indonesia.
+          © {new Date().getFullYear()} {AppConfig.name}. Dibuat untuk memajukan
+          UMKM Indonesia.
         </p>
       </div>
     </footer>

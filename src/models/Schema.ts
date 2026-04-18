@@ -70,6 +70,23 @@ export const products = pgTable("products", {
   price: numeric("price", { precision: 15, scale: 2 }).notNull(),
   currentStock: integer("current_stock").default(0).notNull(),
   unit: text("unit"),
+  type: text("type").default("MENU").notNull(),
+  aiRecipe: jsonb("ai_recipe").default([]),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// PRODUCTION PLANS TABLE
+export const productionPlans = pgTable("production_plans", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  businessId: uuid("business_id")
+    .notNull()
+    .references(() => businesses.id, { onDelete: "cascade" }),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  date: timestamp("date").notNull(), // Tanggal rencana masak
+  plannedQuantity: integer("planned_quantity").default(0).notNull(), // Jumlah yang akan dimasak / ready stock hari itu
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -139,6 +156,8 @@ export const stakeholders = pgTable("stakeholders", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   institutionName: text("institution_name").notNull(),
+  minMediumTrustScore: integer("min_medium_trust_score").default(40).notNull(),
+  minHighTrustScore: integer("min_high_trust_score").default(70).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

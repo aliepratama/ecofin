@@ -1,13 +1,32 @@
 import { redirect } from "next/navigation";
 import { Store } from "lucide-react";
-import { ModeToggle } from "@/components/ModeToggle";
+import { eq } from "drizzle-orm";
+import { db } from "@/libs/DB";
+import { stakeholders } from "@/models/Schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/libs/supabase/server";
 import { createOrganizationAction } from "./actions";
 
-export default function SetupPage() {
+export default async function SetupPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const activeStakeholder = await db.query.stakeholders.findFirst({
+    where: eq(stakeholders.userId, user.id),
+  });
+
+  if (activeStakeholder) {
+    redirect("/stakeholder/dashboard");
+  }
+
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-4 p-4">
       <div className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 shadow-sm">
@@ -17,7 +36,6 @@ export default function SetupPage() {
         >
           Kembali ke home
         </a>
-        <ModeToggle />
       </div>
 
       <div className="w-full space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
