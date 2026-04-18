@@ -5,7 +5,6 @@ import { createClient } from "@/libs/supabase/server";
 import { transactions, businesses, stakeholders } from "@/models/Schema";
 import { calculateTrustScore } from "@/libs/scoring/TrustScore";
 import { DashboardCharts } from "./DashboardCharts";
-import { getDashboardInsights } from "./actions";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -68,14 +67,12 @@ export default async function DashboardPage() {
   //   console.error(err);
   // }
 
-  const insights = null; // AI Insight dimatikan sementara di SSR agar login instan
+  // const insights = null; // AI Insight dimatikan sementara di SSR agar login instan
 
   const plText =
-    insights?.plForecastText ||
     "Berdasarkan penjualan minggu ini, laba bersih akhir bulan diproyeksi stabil. Anda berada di jalur aman.";
-  const plProgress = insights?.plForecastProgress || 80;
+  const plProgress = 80;
   const demandText =
-    insights?.demandForecastText ||
     "Prediksi cuaca cerah dan histori penjualan baik. Tingkatkan stok untuk menghadapi potensi keramaian.";
 
   const getTransactionLabel = (inputMethod: string) => {
