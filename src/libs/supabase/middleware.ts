@@ -1,6 +1,6 @@
-import { createServerClient } from '@supabase/ssr';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export const updateSession = async (request: NextRequest) => {
   // This `try/catch` block is only here for the interactive tutorial.
@@ -18,7 +18,7 @@ export const updateSession = async (request: NextRequest) => {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookieOptions: {
-          name: 'ecofin-auth-token',
+          name: "ecofin-auth-token",
         },
         cookies: {
           getAll() {
@@ -26,7 +26,7 @@ export const updateSession = async (request: NextRequest) => {
           },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value }) =>
-              request.cookies.set(name, value)
+              request.cookies.set(name, value),
             );
             response = NextResponse.next({
               request: {
@@ -34,11 +34,11 @@ export const updateSession = async (request: NextRequest) => {
               },
             });
             cookiesToSet.forEach(({ name, value, options }) =>
-              response.cookies.set(name, value, options)
+              response.cookies.set(name, value, options),
             );
           },
         },
-      }
+      },
     );
 
     // This will refresh session if expired - required for Server Components
@@ -49,10 +49,10 @@ export const updateSession = async (request: NextRequest) => {
 
     // Protect protected routes
     const isProtectedRoute =
-      request.nextUrl.pathname.startsWith('/dashboard') ||
-      request.nextUrl.pathname.startsWith('/setup');
+      request.nextUrl.pathname.startsWith("/dashboard") ||
+      request.nextUrl.pathname.startsWith("/setup");
     if (isProtectedRoute && !user) {
-      return NextResponse.redirect(new URL('/login', request.url));
+      return NextResponse.redirect(new URL("/login", request.url));
     }
 
     return response;

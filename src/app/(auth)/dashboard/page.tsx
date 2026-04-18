@@ -59,7 +59,7 @@ export default async function DashboardPage() {
 
   // Jangan blokir render awal dengan call AI. Pindahkan fetching AI ke komponen Client (SWR/React Query) atau buang await di atas.
   // Untuk sementara, kita berikan default loading atau disable call AI di server agar tidak delay 5-10 detik:
-  
+
   // let insights = null;
   // try {
   //   insights = await getDashboardInsights(); // INI PENYEBAB DELAY

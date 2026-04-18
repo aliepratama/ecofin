@@ -1,6 +1,8 @@
 # AGENTS
 
 ## Principles
+- Read related files thoroughly to grasp the problem context before writing any code.
+- Only modify what is requested. Ensure unrelated features remain untouched and compare changes to avoid unintended side effects.
 - Clarity and consistency over cleverness. Minimal changes. Match existing patterns.
 - Keep components/functions short; break down when it improves structure.
 - TypeScript everywhere; no `any` unless isolated and necessary.
@@ -17,13 +19,15 @@
 - Skip recaps unless the result is ambiguous or you need more input.
 
 ## Commands
+- Prefer the `bun` ecosystem over `npm`, `npx`, or `yarn` (e.g., use `bun add`, `bunx`, `bun run`).
 - Only these `bun run` scripts: `build-local`, `lint`, `check:types`, `check:deps`, `check:i18n`, `test`, `test:e2e`.
 - Never use terminal commands like `cat << 'EOF'` to create or modify files. Always use specific agent tools like `replace_string_in_file` or `create_file`.
 - For database migrations, do not use CLI commands (like `drizzle-kit migrate`) as they often fail. Instead, create an independent JS/TS script that executes the migration SQL directly via the DB connection, run it, and then delete the script.
 - If database structure changes via SQL are needed, create a temporary `.sql` file, explicitly instruct the user to copy and run it in the Supabase SQL Editor, and then delete the `.sql` file once applied.
 
 ## Git Commits
-Conventional Commits: `type: summary` without scope. The summary should be a short, specific sentence that explains what changed and where or why, not a vague phrase. Types: `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert`. `BREAKING CHANGE:` footer when needed.
+- Conventional Commits: `type: summary` without scope. The summary should be a short, specific sentence that explains what changed and where or why, not a vague phrase. Types: `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert`. `BREAKING CHANGE:` footer when needed.
+- Avoid directly committing or pushing code without explicit user approval, unless instructed otherwise.
 
 ## Env
 All env vars validated in `Env.ts`; never read `process.env` directly.
