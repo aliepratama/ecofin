@@ -1,8 +1,29 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Schema } from "@google/genai";
+import { Env } from "../Env";
+
+const getAuthOptions = () => {
+  // Jika di Vercel (menggunakan string JSON dari env)
+  if (Env.GCP_SERVICE_ACCOUNT_JSON) {
+    const credentials = JSON.parse(Env.GCP_SERVICE_ACCOUNT_JSON);
+    return {
+      project: Env.VERTEX_PROJECT_ID,
+      location: Env.VERTEX_LOCATION,
+      googleAuthOptions: { credentials }
+    };
+  }
+  
+  // Jika di Local (menggunakan path fail)
+  return {
+    project: Env.VERTEX_PROJECT_ID,
+    location: Env.VERTEX_LOCATION,
+    // Secara automatik Google SDK akan mencari fail yang 
+    // dinyatakan dalam GOOGLE_APPLICATION_CREDENTIALS di .env.local
+  };
+};
 
 // Initialize the Google Gen AI client via Vertex AI
-const ai = new GoogleGenAI({});
+const ai = new GoogleGenAI(getAuthOptions());
 
 // Define the schema for structured JSON output
 const transactionSchema: Schema = {
