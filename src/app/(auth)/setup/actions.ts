@@ -6,6 +6,61 @@ import { db } from "@/libs/DB";
 import { createClient } from "@/libs/supabase/server";
 import { businesses, users } from "@/models/Schema";
 
+export async function updateOrganizationAction(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  const existingUser = await db.query.users.findFirst({
+    where: eq(users.id, user.id),
+  });
+
+  if (!existingUser) {
+    await db.insert(users).values({
+      id: user.id,
+      email: user.email ?? null,
+      fullName: user.user_metadata?.full_name ?? user.email,
+      avatarUrl: user.user_metadata?.avatar_url ?? null,
+    });
+  }
+
+  const name = formData.get("name") as string;
+  if (!name || name.trim() === "") {
+    throw new Error("Store name is required");
+  }
+
+  const existingBusiness = await db.query.businesses.findFirst({
+    where: eq(businesses.ownerId, user.id),
+  });
+
+  try {
+    if (existingBusiness) {
+      await db
+        .update(businesses)
+        .set({ name: name.trim() })
+        .where(eq(businesses.id, existingBusiness.id));
+    } else {
+      await db.insert(businesses).values({
+        name: name.trim(),
+        ownerId: user.id,
+        category: "F&B",
+      });
+    }
+  } catch (error) {
+    console.error("Error updating business:", error);
+    throw new Error("Failed to update store. Please try again.", {
+      cause: error,
+    });
+  }
+
+  redirect("/dashboard");
+}
+
 export async function createOrganizationAction(formData: FormData) {
   const supabase = await createClient();
   const {

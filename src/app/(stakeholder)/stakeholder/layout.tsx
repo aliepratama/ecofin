@@ -67,7 +67,7 @@ export default async function StakeholderLayout({
             </Link>
           </div>
           <form action={signOutAction}>
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button type="submit" variant="outline" size="sm" className="gap-2">
               <LogOut className="size-4" />
               <span className="hidden sm:inline-block">Keluar</span>
             </Button>

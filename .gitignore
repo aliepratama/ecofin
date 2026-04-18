@@ -64,3 +64,5 @@ build-archive.log
 /test-results/
 /playwright-report/
 /playwright/.cache/
+
+gcp-service-account.json

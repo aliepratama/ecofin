@@ -5,6 +5,65 @@ import { businesses, products } from "@/models/Schema";
 import { eq } from "drizzle-orm";
 import { createClient } from "@/libs/supabase/server";
 import { revalidatePath } from "next/cache";
+import { parseMenusFromImage } from "@/libs/ai/gemini-service";
+
+export async function scanMenuFromImageAction(formData: FormData) {
+  const file = formData.get("image") as File;
+  if (!file || !(file instanceof File))
+    return { error: "Gambar tidak ditemukan atau tidak valid" };
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString("base64");
+
+    // Kirim ke Gemini
+    const parsed = await parseMenusFromImage(base64, file.type);
+    if (!parsed || parsed.length === 0) {
+      return {
+        error: "AI tidak mendeteksi teks menu atau harga dari gambar ini.",
+      };
+    }
+
+    return { success: true, menus: parsed };
+  } catch (error) {
+    console.error("Error reading image:", error);
+    return { error: "Terjadi kesalahan saat memproses gambar dengan AI." };
+  }
+}
+
+export async function bulkAddProducts(productsList: any[]) {
+  const supabase = await createClient();
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData?.user) return { error: "Not authenticated" };
+
+  const userBusinesses = await db
+    .select()
+    .from(businesses)
+    .where(eq(businesses.ownerId, authData.user.id))
+    .limit(1);
+
+  if (userBusinesses.length === 0) return { error: "Business not found" };
+
+  try {
+    const values = productsList.map((p) => ({
+      businessId: userBusinesses[0]?.id || "",
+      name: p.name,
+      price: String(p.price || 0),
+      currentStock: 0,
+      unit: "Porsi", // default
+      type: "MENU" as const,
+    }));
+
+    if (values.length > 0) {
+      await db.insert(products).values(values);
+    }
+    revalidatePath("/dashboard/products");
+    return { success: true };
+  } catch (error) {
+    console.error("Bulk add error", error);
+    return { error: "Gagal menyimpan daftar menu ke database" };
+  }
+}
 
 export async function addProduct(formData: FormData) {
   const supabase = await createClient();

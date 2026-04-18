@@ -14,9 +14,24 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { saveProductionPlan } from "./actions";
-import { CalendarDays, Save, Utensils, Info, Activity } from "lucide-react";
+import {
+  CalendarDays,
+  Save,
+  Utensils,
+  Info,
+  Activity,
+  Plus,
+} from "lucide-react";
 
 type ProductPlan = {
   id: string;
@@ -43,6 +58,9 @@ export function ProductionManager({
     ),
   );
   const [isPending, startTransition] = useTransition();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState("");
+  const [targetPorsi, setTargetPorsi] = useState("");
 
   const handleDateChange = (newDate: Date | undefined) => {
     if (!newDate) return;
@@ -70,9 +88,31 @@ export function ProductionManager({
         }
       }
       router.refresh();
-      alert("Rencana masak berhasil disimpan!");
+      alert("Semua rencana masak berhasil diperbarui!");
     });
   };
+
+  const handleAddPlan = () => {
+    if (!selectedProductId || !targetPorsi) return;
+    const val = parseInt(targetPorsi, 10);
+    if (isNaN(val) || val <= 0) return;
+
+    handlePlanChange(selectedProductId, val.toString());
+
+    startTransition(async () => {
+      const dateStr = format(date, "yyyy-MM-dd");
+      await saveProductionPlan(dateStr, selectedProductId, val);
+      router.refresh();
+      setIsModalOpen(false);
+      setSelectedProductId("");
+      setTargetPorsi("");
+      alert("Rencana masak berhasil ditambahkan!");
+    });
+  };
+
+  const activePlans = initialData.filter(
+    (item) => (plans[item.id] ?? item.planned) > 0 || item.sold > 0,
+  );
 
   return (
     <div className="space-y-6">
@@ -132,19 +172,91 @@ export function ProductionManager({
         <div className="p-4 border-b border-border flex justify-between items-center sm:px-6">
           <h2 className="font-bold text-lg flex items-center">
             <Utensils className="w-5 h-5 mr-2 text-muted-foreground" />
-            Daftar Menu Makanan
+            Manage Rencana Masak
           </h2>
-          <Button onClick={handleSave} disabled={isPending}>
-            {isPending ? (
-              "Menyimpan..."
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Simpan Plan
-              </>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center shadow-sm"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Tambah Rencana
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleSave}
+              disabled={isPending}
+              className="shadow-sm"
+            >
+              {isPending ? (
+                "Menyimpan..."
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Simpan Plan
+                </>
+              )}
+            </Button>
+          </div>
         </div>
+
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Buat Rencana Masak Baru</DialogTitle>
+              <DialogDescription>
+                Pilih menu yang belum direncanakan di hari ini beserta target
+                porsinya.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Pilih Menu</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  value={selectedProductId}
+                  onChange={(e) => setSelectedProductId(e.target.value)}
+                >
+                  <option value="" disabled>
+                    Pilih Menu...
+                  </option>
+                  {initialData
+                    .filter(
+                      (item) =>
+                        (plans[item.id] ?? item.planned) === 0 &&
+                        item.sold === 0,
+                    )
+                    .map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Target Jumlah Porsi</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  placeholder="Misal: 50"
+                  value={targetPorsi}
+                  onChange={(e) => setTargetPorsi(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+                Batal
+              </Button>
+              <Button
+                onClick={handleAddPlan}
+                disabled={!selectedProductId || !targetPorsi || isPending}
+              >
+                {isPending ? "Menyimpan..." : "Tambahkan"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
@@ -162,7 +274,18 @@ export function ProductionManager({
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {initialData.map((item) => {
+              {activePlans.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="p-8 text-center text-muted-foreground"
+                  >
+                    Belum ada rencana masak. Klik "Tambah Rencana" untuk
+                    memulai.
+                  </td>
+                </tr>
+              )}
+              {activePlans.map((item) => {
                 const currentPlanned = plans[item.id] ?? item.planned;
                 const isSoldOut =
                   currentPlanned > 0 && item.sold >= currentPlanned;

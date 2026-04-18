@@ -1,6 +1,6 @@
 "use server";
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -43,8 +43,7 @@ export async function processReceiptAction(formData: FormData) {
   const buffer = Buffer.from(bytes);
   const base64Image = buffer.toString("base64");
 
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const ai = new GoogleGenAI({});
 
   const prompt = `Anda adalah asisten akuntan. Saya memberikan gambar struk/nota.
 Tolong ekstrak informasi dari gambar nota/struk ini ke dalam format JSON yang valid (tanpa markdown):
@@ -61,17 +60,48 @@ Tolong ekstrak informasi dari gambar nota/struk ini ke dalam format JSON yang va
   ]
 }`;
 
-  const result = await model.generateContent([
-    prompt,
-    {
-      inlineData: {
-        data: base64Image,
-        mimeType: file.type || "image/jpeg",
+  const result = await ai.models.generateContent({
+    model: "gemini-2.5-pro",
+    contents: [
+      prompt,
+      {
+        inlineData: {
+          data: base64Image,
+          mimeType: file.type || "image/jpeg",
+        },
+      },
+    ],
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          type: { type: Type.STRING, enum: ["EXPENSE", "INCOME"] },
+          totalAmount: { type: Type.NUMBER },
+          items: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                name: { type: Type.STRING },
+                quantity: { type: Type.NUMBER },
+                price: { type: Type.NUMBER },
+                subtotal: { type: Type.NUMBER },
+              },
+              required: ["name", "quantity", "price", "subtotal"],
+            },
+          },
+        },
+        required: ["type", "totalAmount", "items"],
       },
     },
-  ]);
+  });
 
-  const text = result.response.text();
+  const text = result.text;
+  if (!text) {
+    throw new Error("Tidak ada respon dari AI");
+  }
+
   type ParsedData = {
     type: "EXPENSE" | "INCOME";
     totalAmount: number;

@@ -2,12 +2,10 @@ import { redirect } from "next/navigation";
 import { Store } from "lucide-react";
 import { eq } from "drizzle-orm";
 import { db } from "@/libs/DB";
-import { stakeholders } from "@/models/Schema";
+import { stakeholders, businesses } from "@/models/Schema";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { createClient } from "@/libs/supabase/server";
-import { createOrganizationAction } from "./actions";
+import { BusinessProfileForm } from "./BusinessProfileForm";
 
 export default async function SetupPage() {
   const supabase = await createClient();
@@ -27,6 +25,10 @@ export default async function SetupPage() {
     redirect("/stakeholder/dashboard");
   }
 
+  const existingBusiness = await db.query.businesses.findFirst({
+    where: eq(businesses.ownerId, user.id),
+  });
+
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-4 p-4">
       <div className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 shadow-sm">
@@ -34,7 +36,7 @@ export default async function SetupPage() {
           href="/dashboard"
           className="inline-flex min-h-12 items-center rounded-xl px-3 text-sm font-semibold text-primary hover:bg-primary/10"
         >
-          Kembali ke home
+          Kembali ke dasbor
         </a>
       </div>
 
@@ -49,20 +51,7 @@ export default async function SetupPage() {
           </p>
         </div>
 
-        <form action={createOrganizationAction} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nama Warung / UMKM</Label>
-            <Input
-              id="name"
-              name="name"
-              placeholder="Contoh: Kopi Kenangan, Ayam Geprek Juara"
-              required
-            />
-          </div>
-          <Button type="submit" className="w-full">
-            Simpan profil usaha
-          </Button>
-        </form>
+        <BusinessProfileForm initialName={existingBusiness?.name} />
 
         <form
           action={async () => {
