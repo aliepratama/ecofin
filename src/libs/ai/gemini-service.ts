@@ -1,10 +1,27 @@
+import path from 'node:path';
 import { VertexAI } from '@google-cloud/vertexai';
 import type { Schema } from '@google-cloud/vertexai';
 import { Env } from '../Env';
 
+const isDev = Env.NODE_ENV === 'development' || !Env.NODE_ENV;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let authOptions: any = {};
+
+if (isDev) {
+  authOptions = {
+    keyFilename: path.join(process.cwd(), 'gcp-service-account.json'),
+  };
+} else if (Env.GCP_SERVICE_ACCOUNT_JSON) {
+  // Parsing the JSON string from the environment variable
+  authOptions = {
+    credentials: JSON.parse(Env.GCP_SERVICE_ACCOUNT_JSON),
+  };
+}
+
 const vertexAI = new VertexAI({
   project: Env.VERTEX_PROJECT_ID,
   location: Env.VERTEX_LOCATION,
+  googleAuthOptions: authOptions,
 });
 
 const generativeModel = vertexAI.getGenerativeModel({
