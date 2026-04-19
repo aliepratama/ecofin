@@ -1,8 +1,8 @@
-'use server';
+"use server";
 
-import type { Schema } from '@google-cloud/vertexai';
-import { generativeModel } from '@/libs/ai/gemini-service';
-import { createClient } from '@/libs/supabase/server';
+import type { Schema } from "@google-cloud/vertexai";
+import { generativeModel } from "@/libs/ai/gemini-service";
+import { createClient } from "@/libs/supabase/server";
 
 export async function getDashboardInsights() {
   const supabase = await createClient();
@@ -15,7 +15,7 @@ export async function getDashboardInsights() {
   }
 
   const { data: transactions } = await supabase
-    .from('transactions')
+    .from("transactions")
     .select(
       `
       type,
@@ -24,49 +24,44 @@ export async function getDashboardInsights() {
       transaction_details(
         quantity, subtotal, products(name)
       )
-    `
+    `,
     )
     .limit(30)
-    .order('date', { ascending: false });
+    .order("date", { ascending: false });
 
   if (!transactions || transactions.length === 0) {
     return null;
   }
 
-  const prompt = `Anda adalah analis ahli keuangan AI untuk UMKM F&B. Buat 1) prediksi laba (P&L forecast), 2) prediksi permintaan (demand forecast), dan 3) estimasi progress bulanan dalam persentase (1-100) menggunakan data transaksi terbaru ini. Gunakan bahasa Indonesia santai namun profesional bagi penjual. \nData transaksi: ${JSON.stringify(transactions.map((t) => ({ total: t.total_amount, tipe: t.type, tgl: t.date, item: t.transaction_details?.map((d) => (d.products as any)?.name).join(', ') })))}`;
+  const prompt = `Anda adalah analis ahli keuangan AI untuk UMKM F&B. Buat 1) prediksi laba (P&L forecast), 2) prediksi permintaan (demand forecast), dan 3) estimasi progress bulanan dalam persentase (1-100) menggunakan data transaksi terbaru ini. Gunakan bahasa Indonesia santai namun profesional bagi penjual. \nData transaksi: ${JSON.stringify(transactions.map((t) => ({ total: t.total_amount, tipe: t.type, tgl: t.date, item: t.transaction_details?.map((d) => (d.products as any)?.name).join(", ") })))}`;
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
   const dashboardSchema = {
-    type: 'OBJECT',
+    type: "OBJECT",
     properties: {
       plForecastText: {
-        type: 'STRING',
+        type: "STRING",
         description:
           'Teks singkat perkiraan P&L, contoh: "Berdasarkan penjualan minggu ini, laba bersih akhir bulan diproyeksi mencapai Rp 4.500.000. Anda di jalur aman."',
       },
       plForecastProgress: {
-        type: 'NUMBER',
-        description:
-          'Angka 1-100 merepresentasikan progress target bulanan.',
+        type: "NUMBER",
+        description: "Angka 1-100 merepresentasikan progress target bulanan.",
       },
       demandForecastText: {
-        type: 'STRING',
+        type: "STRING",
         description:
           'Teks singkat prediksi permintaan, contoh: "Berdasarkan histori transaksi, ayam geprek akhir minggu berpotensi laris. Tingkatkan stok 20%."',
       },
     },
-    required: [
-      'plForecastText',
-      'plForecastProgress',
-      'demandForecastText',
-    ],
+    required: ["plForecastText", "plForecastProgress", "demandForecastText"],
   } as unknown as Schema;
 
   try {
     const result = await generativeModel.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
       generationConfig: {
-        responseMimeType: 'application/json',
+        responseMimeType: "application/json",
         responseSchema: dashboardSchema,
       },
     });
@@ -82,7 +77,7 @@ export async function getDashboardInsights() {
       demandForecastText: string;
     };
   } catch (error) {
-    console.error('Failed to get dashboard insights:', error);
+    console.error("Failed to get dashboard insights:", error);
     return null;
   }
 }
