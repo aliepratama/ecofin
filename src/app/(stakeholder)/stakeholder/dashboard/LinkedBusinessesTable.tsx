@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
+import { useRouter } from 'next/navigation';
+import { Badge } from '@/components/ui/badge';
 
 type MonthlyAggregate = {
   month: string;
@@ -22,7 +22,7 @@ type BusinessAggregate = {
 };
 
 function formatCurrency(value: number) {
-  return `Rp ${value.toLocaleString("id-ID")}`;
+  return `Rp ${value.toLocaleString('id-ID')}`;
 }
 
 export function LinkedBusinessesTable({
@@ -46,7 +46,7 @@ export function LinkedBusinessesTable({
 
   return (
     <div className="mt-4 overflow-x-auto">
-      <table className="w-full min-w-[800px] text-left text-sm relative">
+      <table className="relative w-full min-w-[800px] text-left text-sm">
         <thead className="border-b border-border text-muted-foreground">
           <tr>
             <th className="px-2 py-2">UMKM</th>
@@ -60,29 +60,29 @@ export function LinkedBusinessesTable({
         </thead>
         <tbody>
           {businesses.map((item) => {
-            let categoryLabel = "Lemah";
-            let categoryColor = "destructive";
+            let categoryLabel = 'Lemah';
+            let categoryColor = 'destructive';
 
             if (item.trustScore !== null) {
               if (item.trustScore >= minHighTrustScore) {
-                categoryLabel = "Dapat dipercaya";
-                categoryColor = "default";
+                categoryLabel = 'Dapat dipercaya';
+                categoryColor = 'default';
               } else if (item.trustScore >= minMediumTrustScore) {
-                categoryLabel = "Menengah";
-                categoryColor = "secondary";
+                categoryLabel = 'Menengah';
+                categoryColor = 'secondary';
               }
             } else {
-              categoryLabel = "Sedang dikalkulasi";
-              categoryColor = "outline";
+              categoryLabel = 'Sedang dikalkulasi';
+              categoryColor = 'outline';
             }
 
             return (
               <tr
                 key={item.businessId}
-                className="border-b border-border/60 hover:bg-muted/50 cursor-pointer transition-colors"
-                onClick={() =>
-                  router.push(`/stakeholder/dashboard/${item.businessId}`)
-                }
+                className="cursor-pointer border-b border-border/60 transition-colors hover:bg-muted/50"
+                onClick={() => {
+                  router.push(`/stakeholder/dashboard/${item.businessId}`);
+                }}
               >
                 <td className="px-2 py-2 font-medium text-primary underline underline-offset-2">
                   {item.businessName}
@@ -97,16 +97,16 @@ export function LinkedBusinessesTable({
                   {formatCurrency(item.netCashflow)}
                 </td>
                 <td className="px-2 py-2">
-                  <Badge variant="secondary">{item.trustScore ?? "N/A"}</Badge>
+                  <Badge variant="secondary">{item.trustScore ?? 'N/A'}</Badge>
                 </td>
                 <td className="px-2 py-2">
                   <Badge
                     variant={
                       categoryColor as
-                        | "default"
-                        | "destructive"
-                        | "outline"
-                        | "secondary"
+                        | 'default'
+                        | 'destructive'
+                        | 'outline'
+                        | 'secondary'
                     }
                   >
                     {categoryLabel}

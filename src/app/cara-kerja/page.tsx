@@ -1,12 +1,12 @@
-import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
-import { BaseTemplate } from "@/templates/BaseTemplate";
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { buttonVariants } from '@/components/ui/button';
+import { BaseTemplate } from '@/templates/BaseTemplate';
 
 export const metadata: Metadata = {
-  title: "Cara Kerja - Ecofin",
+  title: 'Cara Kerja - Ecofin',
   description:
-    "Pelajari bagaimana Ecofin membantu mengelola keuangan UMKM Anda dengan mudah.",
+    'Pelajari bagaimana Ecofin membantu mengelola keuangan UMKM Anda dengan mudah.',
 };
 
 export default function CaraKerjaPage() {
@@ -34,7 +34,7 @@ export default function CaraKerjaPage() {
           <li className="hidden sm:block">
             <Link
               href="/login"
-              className={buttonVariants({ variant: "ghost" })}
+              className={buttonVariants({ variant: 'ghost' })}
             >
               Masuk Akun
             </Link>
@@ -47,9 +47,9 @@ export default function CaraKerjaPage() {
         </>
       }
     >
-      <div className="mx-auto max-w-3xl py-12 px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl border-b-4 border-foreground inline-block pb-2">
+      <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mb-16 text-center">
+          <h1 className="inline-block border-b-4 border-foreground pb-2 text-3xl font-extrabold tracking-tight sm:text-5xl">
             Cara Kerja Ecofin
           </h1>
           <p className="mt-4 text-xl text-muted-foreground">
@@ -59,12 +59,12 @@ export default function CaraKerjaPage() {
 
         <div className="space-y-12">
           {/* Step 1 */}
-          <div className="flex flex-col sm:flex-row gap-8 items-center bg-muted/30 p-8 rounded-2xl border border-border">
-            <div className="flex-shrink-0 flex items-center justify-center w-16 h-16 rounded-full bg-foreground text-background text-2xl font-bold">
+          <div className="flex flex-col items-center gap-8 rounded-2xl border border-border bg-muted/30 p-8 sm:flex-row">
+            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-foreground text-2xl font-bold text-background">
               1
             </div>
             <div className="text-center sm:text-left">
-              <h2 className="text-2xl font-bold mb-2">
+              <h2 className="mb-2 text-2xl font-bold">
                 Daftar & Atur Profil Usaha
               </h2>
               <p className="text-muted-foreground">
@@ -76,12 +76,12 @@ export default function CaraKerjaPage() {
           </div>
 
           {/* Step 2 */}
-          <div className="flex flex-col sm:flex-row-reverse gap-8 items-center bg-muted/30 p-8 rounded-2xl border border-border">
-            <div className="flex-shrink-0 flex items-center justify-center w-16 h-16 rounded-full bg-foreground text-background text-2xl font-bold">
+          <div className="flex flex-col items-center gap-8 rounded-2xl border border-border bg-muted/30 p-8 sm:flex-row-reverse">
+            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-foreground text-2xl font-bold text-background">
               2
             </div>
             <div className="text-center sm:text-left">
-              <h2 className="text-2xl font-bold mb-2">
+              <h2 className="mb-2 text-2xl font-bold">
                 Catat Transaksi Pakai Foto & Suara
               </h2>
               <p className="text-muted-foreground">
@@ -93,12 +93,12 @@ export default function CaraKerjaPage() {
           </div>
 
           {/* Step 3 */}
-          <div className="flex flex-col sm:flex-row gap-8 items-center bg-muted/30 p-8 rounded-2xl border border-border">
-            <div className="flex-shrink-0 flex items-center justify-center w-16 h-16 rounded-full bg-foreground text-background text-2xl font-bold">
+          <div className="flex flex-col items-center gap-8 rounded-2xl border border-border bg-muted/30 p-8 sm:flex-row">
+            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-foreground text-2xl font-bold text-background">
               3
             </div>
             <div className="text-center sm:text-left">
-              <h2 className="text-2xl font-bold mb-2">
+              <h2 className="mb-2 text-2xl font-bold">
                 Pantau Laporan Secara Real-Time
               </h2>
               <p className="text-muted-foreground">
@@ -110,15 +110,15 @@ export default function CaraKerjaPage() {
           </div>
         </div>
 
-        <div className="mt-16 text-center space-y-6">
+        <div className="mt-16 space-y-6 text-center">
           <h3 className="text-xl font-semibold">
             Siap merapikan keuangan bisnis Anda?
           </h3>
           <Link
             href="/login"
             className={buttonVariants({
-              size: "lg",
-              className: "px-10 text-md",
+              size: 'lg',
+              className: 'px-10 text-md',
             })}
           >
             Coba Sekarang Gratis

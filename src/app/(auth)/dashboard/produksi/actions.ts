@@ -1,32 +1,36 @@
-"use server";
+'use server';
 
-import { redirect } from "next/navigation";
-import { db } from "@/libs/DB";
-import { eq, and, sql, gte, lt } from "drizzle-orm";
+import { eq, and, sql, gte, lt } from 'drizzle-orm';
+import { redirect } from 'next/navigation';
+import { db } from '@/libs/DB';
+import { createClient } from '@/libs/supabase/server';
 import {
   businesses,
   products,
   productionPlans,
   transactions,
   transactionDetails,
-} from "@/models/Schema";
-import { createClient } from "@/libs/supabase/server";
+} from '@/models/Schema';
 
 export async function getProductionPlan(dateStr: string) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) {
+    redirect('/login');
+  }
 
   const userBusinesses = await db
     .select()
     .from(businesses)
     .where(eq(businesses.ownerId, user.id));
 
-  if (!userBusinesses.length) redirect("/setup");
+  if (!userBusinesses.length) {
+    redirect('/setup');
+  }
 
-  const businessId = userBusinesses[0]?.id || "";
+  const businessId = userBusinesses[0]?.id ?? '';
   const targetDate = new Date(dateStr);
   targetDate.setHours(0, 0, 0, 0);
   const targetDateEnd = new Date(targetDate);
@@ -36,7 +40,7 @@ export async function getProductionPlan(dateStr: string) {
   const menus = await db
     .select()
     .from(products)
-    .where(and(eq(products.businessId, businessId), eq(products.type, "MENU")));
+    .where(and(eq(products.businessId, businessId), eq(products.type, 'MENU')));
 
   // Get planned production
   const plans = await db
@@ -50,8 +54,8 @@ export async function getProductionPlan(dateStr: string) {
         eq(productionPlans.businessId, businessId),
         // For exact date matching we use the same timestamp boundary if stored as datetime
         gte(productionPlans.date, targetDate),
-        lt(productionPlans.date, targetDateEnd),
-      ),
+        lt(productionPlans.date, targetDateEnd)
+      )
     );
 
   // Get actual sales from transactions
@@ -59,21 +63,21 @@ export async function getProductionPlan(dateStr: string) {
     .select({
       productId: transactionDetails.productId,
       totalSold: sql<number>`sum(${transactionDetails.quantity})`.mapWith(
-        Number,
+        Number
       ),
     })
     .from(transactionDetails)
     .innerJoin(
       transactions,
-      eq(transactionDetails.transactionId, transactions.id),
+      eq(transactionDetails.transactionId, transactions.id)
     )
     .where(
       and(
         eq(transactions.businessId, businessId),
-        eq(transactions.type, "INCOME"),
+        eq(transactions.type, 'INCOME'),
         gte(transactions.date, targetDate),
-        lt(transactions.date, targetDateEnd),
-      ),
+        lt(transactions.date, targetDateEnd)
+      )
     )
     .groupBy(transactionDetails.productId);
 
@@ -82,8 +86,8 @@ export async function getProductionPlan(dateStr: string) {
     const plan = plans.find((p) => p.productId === menu.id);
     const sale = sales.find((s) => s.productId === menu.id);
 
-    const planned = plan?.plannedQuantity || 0;
-    const sold = sale?.totalSold || 0;
+    const planned = plan?.plannedQuantity ?? 0;
+    const sold = sale?.totalSold ?? 0;
     const remaining = Math.max(0, planned - sold);
 
     return {
@@ -102,21 +106,25 @@ export async function getProductionPlan(dateStr: string) {
 export async function saveProductionPlan(
   dateStr: string,
   productId: string,
-  plannedQuantity: number,
+  plannedQuantity: number
 ) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Unauthorized" };
+  if (!user) {
+    return { error: 'Unauthorized' };
+  }
 
   const userBusinesses = await db
     .select()
     .from(businesses)
     .where(eq(businesses.ownerId, user.id));
-  if (!userBusinesses.length) return { error: "No business" };
+  if (!userBusinesses.length) {
+    return { error: 'No business' };
+  }
 
-  const businessId = userBusinesses[0]?.id || "";
+  const businessId = userBusinesses[0]?.id ?? '';
   const targetDate = new Date(dateStr);
   targetDate.setHours(0, 0, 0, 0);
 

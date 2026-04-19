@@ -7,6 +7,7 @@ const getAuthOptions = () => {
   if (Env.GCP_SERVICE_ACCOUNT_JSON) {
     const credentials = JSON.parse(Env.GCP_SERVICE_ACCOUNT_JSON);
     return {
+      vertexai: true,
       project: Env.VERTEX_PROJECT_ID,
       location: Env.VERTEX_LOCATION,
       googleAuthOptions: { credentials },
@@ -15,10 +16,9 @@ const getAuthOptions = () => {
 
   // Jika di Local (menggunakan path fail)
   return {
+    vertexai: true,
     project: Env.VERTEX_PROJECT_ID,
     location: Env.VERTEX_LOCATION,
-    // Secara automatik Google SDK akan mencari fail yang
-    // dinyatakan dalam GOOGLE_APPLICATION_CREDENTIALS di .env.local
   };
 };
 
@@ -54,12 +54,17 @@ const transactionSchema: Schema = {
         properties: {
           itemName: { type: Type.STRING },
           quantity: { type: Type.NUMBER },
+          price: {
+            type: Type.NUMBER,
+            description:
+              "Harga satuan untuk barang ini. Hitung berdasarkan total jika tidak disebutkan langsung.",
+          },
           unit: {
             type: Type.STRING,
             description: "Satuan (misal: kg, pcs, liter)",
           },
         },
-        required: ["itemName", "quantity"],
+        required: ["itemName", "quantity", "price"],
       },
     },
   },
@@ -70,7 +75,12 @@ export type AIChatResponse = {
   type: "INCOME" | "EXPENSE";
   amount: number;
   description: string;
-  items?: { itemName: string; quantity: number; unit?: string }[];
+  items?: {
+    itemName: string;
+    quantity: number;
+    price: number;
+    unit?: string;
+  }[];
 };
 
 /**

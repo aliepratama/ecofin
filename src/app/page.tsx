@@ -1,6 +1,6 @@
-import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
-import { BaseTemplate } from "@/templates/BaseTemplate";
+import Link from 'next/link';
+import { buttonVariants } from '@/components/ui/button';
+import { BaseTemplate } from '@/templates/BaseTemplate';
 
 export default function Home() {
   return (
@@ -10,7 +10,7 @@ export default function Home() {
           <li>
             <Link
               href="/"
-              className="font-medium transition-colors text-foreground"
+              className="font-medium text-foreground transition-colors"
             >
               Beranda
             </Link>
@@ -30,7 +30,7 @@ export default function Home() {
           <li className="hidden sm:block">
             <Link
               href="/login"
-              className={buttonVariants({ variant: "ghost" })}
+              className={buttonVariants({ variant: 'ghost' })}
             >
               Masuk Akun
             </Link>
@@ -44,21 +44,21 @@ export default function Home() {
       }
     >
       <div className="flex animate-in flex-col items-center justify-center space-y-8 py-24 text-center duration-500 fade-in zoom-in">
-        <h1 className="text-4xl font-extrabold tracking-tight md:text-6xl text-foreground">
-          Asisten Keuangan Pintar untuk{" "}
-          <span className="text-primary border-b-4 border-primary">UMKM</span>{" "}
+        <h1 className="text-4xl font-extrabold tracking-tight text-foreground md:text-6xl">
+          Asisten Keuangan Pintar untuk{' '}
+          <span className="border-b-4 border-primary text-primary">UMKM</span>{' '}
           Anda
         </h1>
-        <p className="max-w-[650px] text-xl text-muted-foreground leading-relaxed font-medium">
+        <p className="max-w-[650px] text-xl leading-relaxed font-medium text-muted-foreground">
           Catat bon, tagihan, dan pengeluaran harian semudah chatting di
           WhatsApp. Tanpa ketik manual, biar AI kami yang mengurus pembukuannya.
         </p>
-        <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-4 px-4 sm:px-0 justify-center">
+        <div className="flex w-full flex-col justify-center gap-4 px-4 sm:w-auto sm:flex-row sm:px-0">
           <Link
             href="/login"
             className={buttonVariants({
-              size: "lg",
-              className: "w-full sm:w-auto px-8 text-md",
+              size: 'lg',
+              className: 'w-full sm:w-auto px-8 text-md',
             })}
           >
             Coba Sekarang
@@ -66,20 +66,20 @@ export default function Home() {
           <Link
             href="/cara-kerja"
             className={buttonVariants({
-              size: "lg",
-              variant: "outline",
-              className: "w-full sm:w-auto px-8 text-md",
+              size: 'lg',
+              variant: 'outline',
+              className: 'w-full sm:w-auto px-8 text-md',
             })}
           >
             Lihat Cara Kerjanya
           </Link>
         </div>
 
-        <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8 text-left border-t border-border pt-16">
+        <div className="mt-16 grid grid-cols-1 gap-8 border-t border-border pt-16 text-left sm:grid-cols-3">
           <div className="space-y-3">
             <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background">
               <svg
-                className="w-6 h-6"
+                className="h-6 w-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -107,7 +107,7 @@ export default function Home() {
           <div className="space-y-3">
             <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background">
               <svg
-                className="w-6 h-6"
+                className="h-6 w-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -129,7 +129,7 @@ export default function Home() {
           <div className="space-y-3">
             <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background">
               <svg
-                className="w-6 h-6"
+                className="h-6 w-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"

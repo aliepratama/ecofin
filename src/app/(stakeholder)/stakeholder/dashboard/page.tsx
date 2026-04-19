@@ -1,20 +1,20 @@
-import { redirect } from "next/navigation";
+import { redirect } from 'next/navigation';
+import { getStakeholderPortfolioAnalyticsAction } from '@/app/(stakeholder)/analytics/actions';
 import {
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { createClient } from "@/libs/supabase/server";
-import { getStakeholderPortfolioAnalyticsAction } from "@/app/(stakeholder)/analytics/actions";
-import { LinkedBusinessesTable } from "./LinkedBusinessesTable";
+} from '@/components/ui/card';
+import { createClient } from '@/libs/supabase/server';
+import { LinkedBusinessesTable } from './LinkedBusinessesTable';
 
 export default async function StakeholderDashboardPage() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
 
   if (!data.user) {
-    redirect("/login");
+    redirect('/login');
   }
 
   const analytics = await getStakeholderPortfolioAnalyticsAction();
@@ -41,7 +41,7 @@ export default async function StakeholderDashboardPage() {
         <Card>
           <CardHeader>
             <CardDescription>Rata-rata trust score</CardDescription>
-            <CardTitle>{analytics.averageTrustScore ?? "Belum ada"}</CardTitle>
+            <CardTitle>{analytics.averageTrustScore ?? 'Belum ada'}</CardTitle>
           </CardHeader>
         </Card>
       </section>

@@ -1,34 +1,34 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { createClient } from "@/libs/supabase/client";
-import Link from "next/link";
-import { checkUserExists } from "./actions";
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { createClient } from '@/libs/supabase/client';
+import { checkUserExists } from './actions';
 
 export default function LoginPage() {
   const router = useRouter();
 
-  const [step, setStep] = useState<"identifier" | "login" | "register">(
-    "identifier",
+  const [step, setStep] = useState<'identifier' | 'login' | 'register'>(
+    'identifier'
   );
-  const [identifier, setIdentifier] = useState("");
-  const [realEmail, setRealEmail] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [identifier, setIdentifier] = useState('');
+  const [realEmail, setRealEmail] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState('');
 
   const supabase = createClient();
 
   const handleGoogleLogin = async () => {
     setLoading(true);
     await supabase.auth.signInWithOAuth({
-      provider: "google",
+      provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/api/auth/callback`,
       },
@@ -36,37 +36,50 @@ export default function LoginPage() {
   };
 
   const getPasswordStrength = () => {
-    if (!password) return { label: "", color: "bg-transparent" };
-    if (password.length < 6)
-      return { label: "Terlalu Pendek", color: "bg-destructive" };
+    if (!password) {
+      return { label: '', color: 'bg-transparent' };
+    }
+    if (password.length < 6) {
+      return { label: 'Terlalu Pendek', color: 'bg-destructive' };
+    }
     let strength = 0;
-    if (/[a-zA-Z]/.test(password)) strength++;
-    if (/[0-9]/.test(password)) strength++;
-    if (/[^a-zA-Z0-9]/.test(password)) strength++;
+    if (/[a-zA-Z]/.test(password)) {
+      strength++;
+    }
+    if (/[0-9]/.test(password)) {
+      strength++;
+    }
+    if (/[^a-zA-Z0-9]/.test(password)) {
+      strength++;
+    }
 
-    if (strength === 1) return { label: "Lemah", color: "bg-yellow-500" };
-    if (strength === 2) return { label: "Sedang", color: "bg-blue-500" };
-    return { label: "Kuat", color: "bg-green-500" };
+    if (strength === 1) {
+      return { label: 'Lemah', color: 'bg-yellow-500' };
+    }
+    if (strength === 2) {
+      return { label: 'Sedang', color: 'bg-blue-500' };
+    }
+    return { label: 'Kuat', color: 'bg-green-500' };
   };
 
   const handleCheckIdentifier = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!identifier) {
-      setErrorMsg("Masukkan email atau no handphone terlebih dahulu");
+      setErrorMsg('Masukkan email atau no handphone terlebih dahulu');
       return;
     }
     setLoading(true);
-    setErrorMsg("");
+    setErrorMsg('');
     try {
       const res = await checkUserExists(identifier);
       if (res.exists && res.email) {
         setRealEmail(res.email);
-        setStep("login");
+        setStep('login');
       } else {
-        setStep("register");
+        setStep('register');
       }
-    } catch (err) {
-      setErrorMsg("Gagal mengecek data. Silakan coba lagi.");
+    } catch {
+      setErrorMsg('Gagal mengecek data. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }
@@ -75,16 +88,16 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setErrorMsg("");
+    setErrorMsg('');
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email: realEmail || identifier,
         password,
       });
       if (error) {
-        setErrorMsg("Password salah atau akun tidak ditemukan.");
+        setErrorMsg('Password salah atau akun tidak ditemukan.');
       } else {
-        router.push("/dashboard");
+        router.push('/dashboard');
       }
     } finally {
       setLoading(false);
@@ -93,17 +106,17 @@ export default function LoginPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg("");
+    setErrorMsg('');
     if (!fullName) {
-      setErrorMsg("Nama lengkap wajib diisi");
+      setErrorMsg('Nama lengkap wajib diisi');
       return;
     }
     if (password.length < 6) {
-      setErrorMsg("Password minimal 6 karakter");
+      setErrorMsg('Password minimal 6 karakter');
       return;
     }
     if (password !== confirmPassword) {
-      setErrorMsg("Konfirmasi password tidak cocok");
+      setErrorMsg('Konfirmasi password tidak cocok');
       return;
     }
 
@@ -112,7 +125,7 @@ export default function LoginPage() {
       // Jika identifier sepertinya bukan format email (misal: angka semua dan mulai 08), buat dummy email agar bisa register dengan password
       let emailToRegister = identifier;
       const isPhoneLike = /^[0-9+]+$/.test(identifier);
-      if (isPhoneLike && !identifier.includes("@")) {
+      if (isPhoneLike && !identifier.includes('@')) {
         emailToRegister = `${identifier}@ecofindummy.com`; // Fallback jika Supabase Auth belum config SMS OTP password
       }
 
@@ -131,10 +144,10 @@ export default function LoginPage() {
         setErrorMsg(error.message);
       } else {
         // Otomatis arahkan ke dashboard setelah daftar sukses
-        router.push("/dashboard");
+        router.push('/dashboard');
       }
-    } catch (err) {
-      setErrorMsg("Gagal mendaftar. Coba lagi.");
+    } catch {
+      setErrorMsg('Gagal mendaftar. Coba lagi.');
     } finally {
       setLoading(false);
     }
@@ -146,7 +159,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Link
         href="/"
-        className="absolute left-4 top-4 md:left-8 md:top-8 inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+        className="absolute top-4 left-4 inline-flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground md:top-8 md:left-8"
       >
         <svg
           className="mr-2 h-4 w-4"
@@ -163,15 +176,15 @@ export default function LoginPage() {
         </svg>
         Kembali ke Beranda
       </Link>
-      <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 text-card-foreground shadow-lg relative">
+      <div className="relative w-full max-w-md rounded-xl border border-border bg-card p-8 text-card-foreground shadow-lg">
         <h2 className="mb-6 text-center text-3xl font-bold tracking-tight">
-          {step === "identifier" && "Masuk ke Ecofin"}
-          {step === "login" && "Masukkan Password"}
-          {step === "register" && "Buat Akun Baru"}
+          {step === 'identifier' && 'Masuk ke Ecofin'}
+          {step === 'login' && 'Masukkan Password'}
+          {step === 'register' && 'Buat Akun Baru'}
         </h2>
 
         <div className="space-y-4">
-          {step === "identifier" && (
+          {step === 'identifier' && (
             <>
               <Button
                 variant="outline"
@@ -217,7 +230,9 @@ export default function LoginPage() {
                     id="email"
                     type="text"
                     value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
+                    onChange={(e) => {
+                      setIdentifier(e.target.value);
+                    }}
                     className="h-12"
                     placeholder="08123xxx / email@anda.com"
                     disabled={loading}
@@ -232,16 +247,16 @@ export default function LoginPage() {
                   className="text-md h-12 w-full font-semibold"
                   disabled={loading}
                 >
-                  {loading ? "Memuat..." : "Lanjutkan"}
+                  {loading ? 'Memuat...' : 'Lanjutkan'}
                 </Button>
               </form>
             </>
           )}
 
-          {step === "login" && (
+          {step === 'login' && (
             <form onSubmit={handleLogin} className="space-y-4">
-              <p className="text-sm text-muted-foreground text-center mb-4">
-                Melanjutkan sebagai{" "}
+              <p className="mb-4 text-center text-sm text-muted-foreground">
+                Melanjutkan sebagai{' '}
                 <span className="font-semibold text-foreground">
                   {identifier}
                 </span>
@@ -253,7 +268,9 @@ export default function LoginPage() {
                   id="password"
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                  }}
                   className="h-12"
                   placeholder="******"
                   disabled={loading}
@@ -269,7 +286,9 @@ export default function LoginPage() {
                   type="button"
                   variant="outline"
                   className="h-12 w-1/3"
-                  onClick={() => setStep("identifier")}
+                  onClick={() => {
+                    setStep('identifier');
+                  }}
                   disabled={loading}
                 >
                   Kembali
@@ -279,15 +298,15 @@ export default function LoginPage() {
                   className="h-12 w-2/3 font-semibold"
                   disabled={loading}
                 >
-                  {loading ? "Memuat..." : "Masuk"}
+                  {loading ? 'Memuat...' : 'Masuk'}
                 </Button>
               </div>
             </form>
           )}
 
-          {step === "register" && (
+          {step === 'register' && (
             <form onSubmit={handleRegister} className="space-y-4">
-              <p className="text-sm text-muted-foreground text-center mb-2">
+              <p className="mb-2 text-center text-sm text-muted-foreground">
                 Akun belum terdaftar. Silakan lengkapi data Anda.
               </p>
 
@@ -297,7 +316,9 @@ export default function LoginPage() {
                   id="fullname"
                   type="text"
                   value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  onChange={(e) => {
+                    setFullName(e.target.value);
+                  }}
                   className="h-12"
                   placeholder="Budi Santoso"
                   disabled={loading}
@@ -310,29 +331,31 @@ export default function LoginPage() {
                   id="reg-password"
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                  }}
                   className="h-12"
                   placeholder="Minimal 6 karakter"
                   disabled={loading}
                 />
                 {password.length > 0 && (
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                  <div className="mt-1 flex items-center gap-2">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
                       <div
                         className={`h-full ${strength.color} transition-all duration-300`}
                         style={{
                           width:
                             password.length < 6
-                              ? "33%"
-                              : strength.label === "Sedang"
-                                ? "66%"
-                                : strength.label === "Kuat"
-                                  ? "100%"
-                                  : "33%",
+                              ? '33%'
+                              : strength.label === 'Sedang'
+                                ? '66%'
+                                : strength.label === 'Kuat'
+                                  ? '100%'
+                                  : '33%',
                         }}
                       />
                     </div>
-                    <span className="text-xs font-medium w-24 text-right text-muted-foreground">
+                    <span className="w-24 text-right text-xs font-medium text-muted-foreground">
                       {strength.label}
                     </span>
                   </div>
@@ -345,7 +368,9 @@ export default function LoginPage() {
                   id="confirm-password"
                   type="password"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                  }}
                   className="h-12"
                   placeholder="Ketik ulang password"
                   disabled={loading}
@@ -361,7 +386,9 @@ export default function LoginPage() {
                   type="button"
                   variant="outline"
                   className="h-12 w-1/3"
-                  onClick={() => setStep("identifier")}
+                  onClick={() => {
+                    setStep('identifier');
+                  }}
                   disabled={loading}
                 >
                   Batal
@@ -371,7 +398,7 @@ export default function LoginPage() {
                   className="h-12 w-2/3 font-semibold"
                   disabled={loading}
                 >
-                  {loading ? "Memuat..." : "Daftar"}
+                  {loading ? 'Memuat...' : 'Daftar'}
                 </Button>
               </div>
             </form>

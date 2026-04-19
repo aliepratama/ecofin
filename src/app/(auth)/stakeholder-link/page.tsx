@@ -1,16 +1,16 @@
-import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { redirect } from 'next/navigation';
+import { claimStakeholderInviteAction } from '@/app/(stakeholder)/link/actions';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { createClient } from "@/libs/supabase/server";
-import { claimStakeholderInviteAction } from "@/app/(stakeholder)/link/actions";
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { createClient } from '@/libs/supabase/server';
 
 type PageProps = {
   searchParams: Promise<{
@@ -27,7 +27,7 @@ export default async function StakeholderLinkPage(props: PageProps) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login");
+    redirect('/login');
   }
 
   const { linked, error, inviteCode } = await props.searchParams;
@@ -45,7 +45,7 @@ export default async function StakeholderLinkPage(props: PageProps) {
         <CardContent>
           <form
             action={async (formData) => {
-              "use server";
+              'use server';
               try {
                 const result = await claimStakeholderInviteAction(formData);
                 redirect(`/stakeholder-link?linked=${result.linkedCount}`);
@@ -53,9 +53,9 @@ export default async function StakeholderLinkPage(props: PageProps) {
                 const message =
                   submitError instanceof Error
                     ? submitError.message
-                    : "Gagal menghubungkan kode";
+                    : 'Gagal menghubungkan kode';
                 redirect(
-                  `/stakeholder-link?error=${encodeURIComponent(message)}`,
+                  `/stakeholder-link?error=${encodeURIComponent(message)}`
                 );
               }
             }}
@@ -67,7 +67,7 @@ export default async function StakeholderLinkPage(props: PageProps) {
                 id="inviteCode"
                 name="inviteCode"
                 placeholder="Contoh: 8B2F9A1C"
-                defaultValue={inviteCode ?? ""}
+                defaultValue={inviteCode ?? ''}
                 required
               />
             </div>

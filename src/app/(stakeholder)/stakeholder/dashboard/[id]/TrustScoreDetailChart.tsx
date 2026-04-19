@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Bar,
@@ -12,17 +12,17 @@ import {
   PieChart,
   Pie,
   Cell,
-} from "recharts";
+} from 'recharts';
 
 function formatCurrency(value: number) {
-  return `Rp ${value.toLocaleString("id-ID")}`;
+  return `Rp ${value.toLocaleString('id-ID')}`;
 }
 
 type Props = {
   score?: number;
   minMedium?: number;
   minHigh?: number;
-  monthlyTrend?: Array<{ month: string; revenue: number; expense: number }>;
+  monthlyTrend?: { month: string; revenue: number; expense: number }[];
   showTrendOnly?: boolean;
 };
 
@@ -58,22 +58,22 @@ export function TrustScoreDetailChart({
             axisLine={false}
             width={80}
             tickFormatter={(val: number) =>
-              val >= 1000000
-                ? `Rp ${(val / 1000000).toFixed(0)} Jt`
-                : val >= 1000
+              val >= 1_000_000
+                ? `Rp ${(val / 1_000_000).toFixed(0)} Jt`
+                : (val >= 1000
                   ? `Rp ${(val / 1000).toFixed(0)} K`
-                  : `Rp ${val}`
+                  : `Rp ${val}`)
             }
           />
           <Tooltip
-            cursor={{ fill: "transparent" }}
+            cursor={{ fill: 'transparent' }}
             formatter={(value: any, name: any) => [
               formatCurrency(Number(value)),
               name,
             ]}
-            contentStyle={{ borderRadius: "8px" }}
+            contentStyle={{ borderRadius: '8px' }}
           />
-          <Legend wrapperStyle={{ paddingTop: "10px" }} />
+          <Legend wrapperStyle={{ paddingTop: '10px' }} />
           <Bar
             dataKey="revenue"
             name="Omzet"
@@ -96,17 +96,20 @@ export function TrustScoreDetailChart({
   // Dial / Gauge Chart for Trust Score
   const remain = 100 - score;
   const data = [
-    { name: "Score", value: score },
-    { name: "Sisa", value: remain > 0 ? remain : 0 },
+    { name: 'Score', value: score },
+    { name: 'Sisa', value: Math.max(remain, 0) },
   ];
 
-  let color = "#ef4444"; // red
-  if (score >= minHigh)
-    color = "#10b981"; // green
-  else if (score >= minMedium) color = "#f59e0b"; // yellow
+  let color = '#ef4444'; // red
+  if (score >= minHigh) {
+    color = '#10b981';
+  } // green
+  else if (score >= minMedium) {
+    color = '#f59e0b';
+  } // yellow
 
   return (
-    <div className="relative flex items-center justify-center h-48 py-4">
+    <div className="relative flex h-48 items-center justify-center py-4">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -130,7 +133,7 @@ export function TrustScoreDetailChart({
         <span className="text-3xl font-extrabold" style={{ color }}>
           {score}
         </span>
-        <span className="text-xs text-muted-foreground mt-1 font-semibold">
+        <span className="mt-1 text-xs font-semibold text-muted-foreground">
           / 100
         </span>
       </div>

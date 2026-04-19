@@ -1,10 +1,10 @@
-import { getProductionPlan } from "./actions";
-import { ProductionManager } from "./ProductionManager";
-import { createClient } from "@/libs/supabase/server";
-import { redirect } from "next/navigation";
+import { redirect } from 'next/navigation';
+import { createClient } from '@/libs/supabase/server';
+import { getProductionPlan } from './actions';
+import { ProductionManager } from './ProductionManager';
 
 export const metadata = {
-  title: "Rencana Masak & Produksi",
+  title: 'Rencana Masak & Produksi',
 };
 
 export default async function ProduksiPage(props: {
@@ -14,12 +14,13 @@ export default async function ProduksiPage(props: {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) {
+    redirect('/login');
+  }
 
   const sp = await props.searchParams;
   // If undefined, default to today
-  const targetDate =
-    sp?.date || (new Date().toISOString().split("T")[0] as string);
+  const targetDate = sp?.date ?? new Date().toISOString().split('T')[0]!;
 
   const planData = await getProductionPlan(targetDate);
 
@@ -31,7 +32,7 @@ export default async function ProduksiPage(props: {
             <h1 className="text-2xl font-bold tracking-tight">
               Rencana Produksi
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="mt-1 text-sm text-muted-foreground">
               Atur menu yang akan didisplay dan pantau jumlah terjual.
             </p>
           </div>

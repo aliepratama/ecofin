@@ -1,10 +1,10 @@
-"use server";
+'use server';
 
-import { eq } from "drizzle-orm";
-import { redirect } from "next/navigation";
-import { db } from "@/libs/DB";
-import { createClient } from "@/libs/supabase/server";
-import { businesses, users } from "@/models/Schema";
+import { eq } from 'drizzle-orm';
+import { redirect } from 'next/navigation';
+import { db } from '@/libs/DB';
+import { createClient } from '@/libs/supabase/server';
+import { businesses, users } from '@/models/Schema';
 
 export async function updateOrganizationAction(formData: FormData) {
   const supabase = await createClient();
@@ -13,7 +13,7 @@ export async function updateOrganizationAction(formData: FormData) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("Unauthorized");
+    throw new Error('Unauthorized');
   }
 
   const existingUser = await db.query.users.findFirst({
@@ -29,9 +29,9 @@ export async function updateOrganizationAction(formData: FormData) {
     });
   }
 
-  const name = formData.get("name") as string;
-  if (!name || name.trim() === "") {
-    throw new Error("Store name is required");
+  const name = formData.get('name') as string;
+  if (!name || name.trim() === '') {
+    throw new Error('Store name is required');
   }
 
   const existingBusiness = await db.query.businesses.findFirst({
@@ -48,17 +48,17 @@ export async function updateOrganizationAction(formData: FormData) {
       await db.insert(businesses).values({
         name: name.trim(),
         ownerId: user.id,
-        category: "F&B",
+        category: 'F&B',
       });
     }
   } catch (error) {
-    console.error("Error updating business:", error);
-    throw new Error("Failed to update store. Please try again.", {
+    console.error('Error updating business:', error);
+    throw new Error('Failed to update store. Please try again.', {
       cause: error,
     });
   }
 
-  redirect("/dashboard");
+  redirect('/dashboard');
 }
 
 export async function createOrganizationAction(formData: FormData) {
@@ -68,7 +68,7 @@ export async function createOrganizationAction(formData: FormData) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("Unauthorized");
+    throw new Error('Unauthorized');
   }
 
   // Ensure user is in our public.users table or we get foreign key error
@@ -85,9 +85,9 @@ export async function createOrganizationAction(formData: FormData) {
     });
   }
 
-  const name = formData.get("name") as string;
-  if (!name || name.trim() === "") {
-    throw new Error("Store name is required");
+  const name = formData.get('name') as string;
+  if (!name || name.trim() === '') {
+    throw new Error('Store name is required');
   }
 
   try {
@@ -97,19 +97,19 @@ export async function createOrganizationAction(formData: FormData) {
       .values({
         name: name.trim(),
         ownerId: user.id,
-        category: "F&B",
+        category: 'F&B',
       })
       .returning();
 
     if (!business) {
-      throw new Error("Failed to insert business");
+      throw new Error('Failed to insert business');
     }
   } catch (error) {
-    console.error("Error creating business:", error);
-    throw new Error("Failed to create store. Please try again.", {
+    console.error('Error creating business:', error);
+    throw new Error('Failed to create store. Please try again.', {
       cause: error,
     });
   }
 
-  redirect("/dashboard");
+  redirect('/dashboard');
 }

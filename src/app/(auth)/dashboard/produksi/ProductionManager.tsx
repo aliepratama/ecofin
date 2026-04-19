@@ -1,29 +1,7 @@
-"use client";
+'use client';
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { format } from "date-fns";
-import { id as idLocale } from "date-fns/locale";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
-import { saveProductionPlan } from "./actions";
+import { format } from 'date-fns';
+import { id as idLocale } from 'date-fns/locale';
 import {
   CalendarDays,
   Save,
@@ -31,7 +9,29 @@ import {
   Info,
   Activity,
   Plus,
-} from "lucide-react";
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState, useTransition } from 'react';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { saveProductionPlan } from './actions';
 
 type ProductPlan = {
   id: string;
@@ -52,26 +52,25 @@ export function ProductionManager({
   const router = useRouter();
   const [date, setDate] = useState<Date>(new Date(initialDate));
   const [plans, setPlans] = useState<Record<string, number>>(
-    initialData.reduce(
-      (acc, curr) => ({ ...acc, [curr.id]: curr.planned }),
-      {},
-    ),
+    initialData.reduce((acc, curr) => ({ ...acc, [curr.id]: curr.planned }), {})
   );
   const [isPending, startTransition] = useTransition();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedProductId, setSelectedProductId] = useState("");
-  const [targetPorsi, setTargetPorsi] = useState("");
+  const [selectedProductId, setSelectedProductId] = useState('');
+  const [targetPorsi, setTargetPorsi] = useState('');
 
   const handleDateChange = (newDate: Date | undefined) => {
-    if (!newDate) return;
+    if (!newDate) {
+      return;
+    }
     setDate(newDate);
     // Localize the format back to YYYY-MM-DD
-    const dateQuery = format(newDate, "yyyy-MM-dd");
+    const dateQuery = format(newDate, 'yyyy-MM-dd');
     router.push(`/dashboard/produksi?date=${dateQuery}`);
   };
 
   const handlePlanChange = (productId: string, val: string) => {
-    const planned = parseInt(val, 10);
+    const planned = Number.parseInt(val, 10);
     setPlans((prev) => ({
       ...prev,
       [productId]: isNaN(planned) ? 0 : planned,
@@ -80,7 +79,7 @@ export function ProductionManager({
 
   const handleSave = () => {
     startTransition(async () => {
-      const dateStr = format(date, "yyyy-MM-dd");
+      const dateStr = format(date, 'yyyy-MM-dd');
       for (const product of initialData) {
         const plannedValue = plans[product.id];
         if (plannedValue !== undefined && plannedValue !== product.planned) {
@@ -88,38 +87,42 @@ export function ProductionManager({
         }
       }
       router.refresh();
-      alert("Semua rencana masak berhasil diperbarui!");
+      alert('Semua rencana masak berhasil diperbarui!');
     });
   };
 
   const handleAddPlan = () => {
-    if (!selectedProductId || !targetPorsi) return;
-    const val = parseInt(targetPorsi, 10);
-    if (isNaN(val) || val <= 0) return;
+    if (!selectedProductId || !targetPorsi) {
+      return;
+    }
+    const val = Number.parseInt(targetPorsi, 10);
+    if (isNaN(val) || val <= 0) {
+      return;
+    }
 
     handlePlanChange(selectedProductId, val.toString());
 
     startTransition(async () => {
-      const dateStr = format(date, "yyyy-MM-dd");
+      const dateStr = format(date, 'yyyy-MM-dd');
       await saveProductionPlan(dateStr, selectedProductId, val);
       router.refresh();
       setIsModalOpen(false);
-      setSelectedProductId("");
-      setTargetPorsi("");
-      alert("Rencana masak berhasil ditambahkan!");
+      setSelectedProductId('');
+      setTargetPorsi('');
+      alert('Rencana masak berhasil ditambahkan!');
     });
   };
 
   const activePlans = initialData.filter(
-    (item) => (plans[item.id] ?? item.planned) > 0 || item.sold > 0,
+    (item) => (plans[item.id] ?? item.planned) > 0 || item.sold > 0
   );
 
   return (
     <div className="space-y-6">
-      <Card className="border-border shadow-sm max-w-sm">
+      <Card className="max-w-sm border-border shadow-sm">
         <CardContent className="p-4 pt-6">
-          <Label className="text-muted-foreground font-medium flex items-center mb-2 text-xs uppercase tracking-wider">
-            <CalendarDays className="w-4 h-4 mr-2" />
+          <Label className="mb-2 flex items-center text-xs font-medium tracking-wider text-muted-foreground uppercase">
+            <CalendarDays className="mr-2 h-4 w-4" />
             Pilih Tanggal Rencana
           </Label>
           <Popover>
@@ -128,13 +131,13 @@ export function ProductionManager({
                 <Button
                   variant="outline"
                   className={cn(
-                    "flex items-center w-full justify-start text-left font-normal border border-input rounded-md px-3 h-12 bg-background",
-                    !date && "text-muted-foreground",
+                    'flex items-center w-full justify-start text-left font-normal border border-input rounded-md px-3 h-12 bg-background',
+                    !date && 'text-muted-foreground'
                   )}
                 >
                   <CalendarDays className="mr-2 h-4 w-4" />
                   {date ? (
-                    format(date, "PPP", { locale: idLocale })
+                    format(date, 'PPP', { locale: idLocale })
                   ) : (
                     <span>Pilih tanggal</span>
                   )}
@@ -154,13 +157,13 @@ export function ProductionManager({
         </CardContent>
       </Card>
 
-      <div className="bg-primary/5 border border-primary/20 text-primary-foreground p-4 rounded-xl flex items-start gap-4">
-        <div className="bg-primary/20 p-2 rounded-full mt-0.5">
-          <Info className="w-5 h-5 text-primary" />
+      <div className="flex items-start gap-4 rounded-xl border border-primary/20 bg-primary/5 p-4 text-primary-foreground">
+        <div className="mt-0.5 rounded-full bg-primary/20 p-2">
+          <Info className="h-5 w-5 text-primary" />
         </div>
         <div>
           <h4 className="font-bold text-primary">Informasi</h4>
-          <p className="text-sm text-primary/80 mt-1">
+          <p className="mt-1 text-sm text-primary/80">
             "Target Masak" adalah porsi yang Anda sediakan di etalase/dapur hari
             ini. Kolom "Terjual" akan naik otomatis saat terjadi transaksi
             (Pemasukan).
@@ -168,18 +171,20 @@ export function ProductionManager({
         </div>
       </div>
 
-      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-border flex justify-between items-center sm:px-6">
-          <h2 className="font-bold text-lg flex items-center">
-            <Utensils className="w-5 h-5 mr-2 text-muted-foreground" />
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex items-center justify-between border-b border-border p-4 sm:px-6">
+          <h2 className="flex items-center text-lg font-bold">
+            <Utensils className="mr-2 h-5 w-5 text-muted-foreground" />
             Manage Rencana Masak
           </h2>
           <div className="flex gap-2">
             <Button
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                setIsModalOpen(true);
+              }}
               className="flex items-center shadow-sm"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               Tambah Rencana
             </Button>
             <Button
@@ -189,10 +194,10 @@ export function ProductionManager({
               className="shadow-sm"
             >
               {isPending ? (
-                "Menyimpan..."
+                'Menyimpan...'
               ) : (
                 <>
-                  <Save className="w-4 h-4 mr-2" />
+                  <Save className="mr-2 h-4 w-4" />
                   Simpan Plan
                 </>
               )}
@@ -213,9 +218,11 @@ export function ProductionManager({
               <div className="space-y-2">
                 <Label>Pilih Menu</Label>
                 <select
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   value={selectedProductId}
-                  onChange={(e) => setSelectedProductId(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedProductId(e.target.value);
+                  }}
                 >
                   <option value="" disabled>
                     Pilih Menu...
@@ -224,7 +231,7 @@ export function ProductionManager({
                     .filter(
                       (item) =>
                         (plans[item.id] ?? item.planned) === 0 &&
-                        item.sold === 0,
+                        item.sold === 0
                     )
                     .map((item) => (
                       <option key={item.id} value={item.id}>
@@ -240,37 +247,44 @@ export function ProductionManager({
                   min="1"
                   placeholder="Misal: 50"
                   value={targetPorsi}
-                  onChange={(e) => setTargetPorsi(e.target.value)}
+                  onChange={(e) => {
+                    setTargetPorsi(e.target.value);
+                  }}
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsModalOpen(false);
+                }}
+              >
                 Batal
               </Button>
               <Button
                 onClick={handleAddPlan}
                 disabled={!selectedProductId || !targetPorsi || isPending}
               >
-                {isPending ? "Menyimpan..." : "Tambahkan"}
+                {isPending ? 'Menyimpan...' : 'Tambahkan'}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-muted/50 text-muted-foreground uppercase text-xs">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-muted/50 text-xs text-muted-foreground uppercase">
               <tr>
                 <th className="px-6 py-4 font-semibold">Nama Menu</th>
-                <th className="px-6 py-4 font-semibold text-center w-36">
+                <th className="w-36 px-6 py-4 text-center font-semibold">
                   Target Masak (Porsi)
                 </th>
-                <th className="px-6 py-4 font-semibold text-center">Terjual</th>
-                <th className="px-6 py-4 font-semibold text-center">
+                <th className="px-6 py-4 text-center font-semibold">Terjual</th>
+                <th className="px-6 py-4 text-center font-semibold">
                   Estimasi Sisa
                 </th>
-                <th className="px-6 py-4 font-semibold text-right">Status</th>
+                <th className="px-6 py-4 text-right font-semibold">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -294,19 +308,19 @@ export function ProductionManager({
                 return (
                   <tr
                     key={item.id}
-                    className="hover:bg-muted/20 transition-colors"
+                    className="transition-colors hover:bg-muted/20"
                   >
-                    <td className="px-6 py-4 font-medium text-base text-foreground">
+                    <td className="px-6 py-4 text-base font-medium text-foreground">
                       {item.name}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <Input
                         type="number"
                         min="0"
-                        value={plans[item.id] || ""}
-                        onChange={(e) =>
-                          handlePlanChange(item.id, e.target.value)
-                        }
+                        value={plans[item.id] ?? ''}
+                        onChange={(e) => {
+                          handlePlanChange(item.id, e.target.value);
+                        }}
                         className="w-full text-center font-bold"
                         placeholder="0"
                       />
@@ -318,26 +332,26 @@ export function ProductionManager({
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span
-                        className={`text-lg font-bold ${sisa === 0 && currentPlanned > 0 ? "text-destructive" : "text-foreground"}`}
+                        className={`text-lg font-bold ${sisa === 0 && currentPlanned > 0 ? 'text-destructive' : 'text-foreground'}`}
                       >
                         {sisa}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       {item.planned === 0 && currentPlanned === 0 ? (
-                        <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full font-medium">
+                        <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
                           Libur / Kosong
                         </span>
-                      ) : isSoldOut ? (
-                        <span className="text-xs border-destructive text-destructive border px-2 py-1 rounded-full font-medium">
+                      ) : (isSoldOut ? (
+                        <span className="rounded-full border border-destructive px-2 py-1 text-xs font-medium text-destructive">
                           Habis (Sold Out)
                         </span>
                       ) : (
-                        <span className="text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded-full font-medium flex items-center justify-end w-fit ml-auto">
-                          <Activity className="w-3 h-3 mr-1" />
+                        <span className="ml-auto flex w-fit items-center justify-end rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                          <Activity className="mr-1 h-3 w-3" />
                           Tersedia
                         </span>
-                      )}
+                      ))}
                     </td>
                   </tr>
                 );

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import {
   PieChart,
   Pie,
@@ -10,7 +10,7 @@ import {
   Tooltip,
   BarChart,
   Bar,
-} from "recharts";
+} from 'recharts';
 
 type DashboardChartsProps = {
   transactions: any[];
@@ -31,10 +31,10 @@ export function DashboardCharts({
     };
 
     updateChartWidth();
-    globalThis.addEventListener("resize", updateChartWidth);
+    globalThis.addEventListener('resize', updateChartWidth);
 
     return () => {
-      globalThis.removeEventListener("resize", updateChartWidth);
+      globalThis.removeEventListener('resize', updateChartWidth);
     };
   }, []);
 
@@ -42,7 +42,7 @@ export function DashboardCharts({
   const last7Days = Array.from({ length: 7 }).map((_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
-    return d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
   });
 
   const dailyData = last7Days.map((label) => ({
@@ -56,43 +56,51 @@ export function DashboardCharts({
 
   transactions.forEach((t) => {
     const rawAmount = Number(t.totalAmount) || 0;
-    const dt = new Date(t.date).toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "short",
+    const dt = new Date(t.date).toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
     });
 
-    if (t.type === "INCOME") totalIncome += rawAmount;
-    if (t.type === "EXPENSE") totalExpense += rawAmount;
+    if (t.type === 'INCOME') {
+      totalIncome += rawAmount;
+    }
+    if (t.type === 'EXPENSE') {
+      totalExpense += rawAmount;
+    }
 
     const dayEntry = dailyData.find((d) => d.name === dt);
     if (dayEntry) {
-      if (t.type === "INCOME") dayEntry.Pemasukan += rawAmount;
-      if (t.type === "EXPENSE") dayEntry.Pengeluaran += rawAmount;
+      if (t.type === 'INCOME') {
+        dayEntry.Pemasukan += rawAmount;
+      }
+      if (t.type === 'EXPENSE') {
+        dayEntry.Pengeluaran += rawAmount;
+      }
     }
   });
 
   const donutData = [
-    { name: "Pemasukan", value: totalIncome, fill: "#003087" },
-    { name: "Pengeluaran", value: totalExpense, fill: "#ef4444" },
+    { name: 'Pemasukan', value: totalIncome, fill: '#003087' },
+    { name: 'Pengeluaran', value: totalExpense, fill: '#ef4444' },
   ];
 
-  let trustBadgeClassName = "bg-red-500";
-  let trustBadgeText = "Belum Siap";
+  let trustBadgeClassName = 'bg-red-500';
+  let trustBadgeText = 'Belum Siap';
 
   if (trustScore >= 80) {
-    trustBadgeClassName = "bg-green-500";
-    trustBadgeText = "Siap Pinjam";
+    trustBadgeClassName = 'bg-green-500';
+    trustBadgeText = 'Siap Pinjam';
   } else if (trustScore >= 50) {
-    trustBadgeClassName = "bg-yellow-500";
-    trustBadgeText = "Perlu Konsistensi";
+    trustBadgeClassName = 'bg-yellow-500';
+    trustBadgeText = 'Perlu Konsistensi';
   }
 
   const trustGaugeData = [
-    { name: "Score", value: trustScore, fill: "#003087" },
+    { name: 'Score', value: trustScore, fill: '#003087' },
     {
-      name: "Remaining",
+      name: 'Remaining',
       value: Math.max(0, 100 - trustScore),
-      fill: "#e5e5e5",
+      fill: '#e5e5e5',
     },
   ];
 
@@ -160,18 +168,18 @@ export function DashboardCharts({
               hide
               domain={[
                 0,
-                (dataMax: number) => (dataMax === 0 ? 100000 : dataMax * 1.2),
+                (dataMax: number) => (dataMax === 0 ? 100_000 : dataMax * 1.2),
               ]}
             />
             <Tooltip
-              cursor={{ fill: "rgba(0,0,0,0.05)" }}
+              cursor={{ fill: 'rgba(0,0,0,0.05)' }}
               contentStyle={{
-                borderRadius: "8px",
-                border: "none",
-                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                borderRadius: '8px',
+                border: 'none',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
               }}
               formatter={(value) =>
-                `Rp ${Number(value ?? 0).toLocaleString("id-ID")}`
+                `Rp ${Number(value ?? 0).toLocaleString('id-ID')}`
               }
             />
             <Bar
@@ -195,7 +203,7 @@ export function DashboardCharts({
         <h3 className="mb-6 text-lg font-bold text-foreground">
           Proporsi Pemasukan vs Pengeluaran
         </h3>
-        <div className="mx-auto flex h-64 w-full min-w-0 max-w-sm items-center justify-center overflow-hidden">
+        <div className="mx-auto flex h-64 w-full max-w-sm min-w-0 items-center justify-center overflow-hidden">
           <PieChart width={donutChartWidth} height={256}>
             <Pie
               data={donutData}
@@ -209,12 +217,12 @@ export function DashboardCharts({
             />
             <Tooltip
               formatter={(value) =>
-                `Rp ${Number(value ?? 0).toLocaleString("id-ID")}`
+                `Rp ${Number(value ?? 0).toLocaleString('id-ID')}`
               }
               contentStyle={{
-                borderRadius: "8px",
-                border: "none",
-                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                borderRadius: '8px',
+                border: 'none',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
               }}
             />
           </PieChart>

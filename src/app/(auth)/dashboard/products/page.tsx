@@ -1,9 +1,9 @@
-import { createClient } from "@/libs/supabase/server";
-import { redirect } from "next/navigation";
-import { db } from "@/libs/DB";
-import { businesses, products } from "@/models/Schema";
-import { eq } from "drizzle-orm";
-import { ProductManager } from "./ProductManager";
+import { eq } from 'drizzle-orm';
+import { redirect } from 'next/navigation';
+import { db } from '@/libs/DB';
+import { createClient } from '@/libs/supabase/server';
+import { businesses, products } from '@/models/Schema';
+import { ProductManager } from './ProductManager';
 
 export default async function ProductsPage() {
   const supabase = await createClient();
@@ -11,7 +11,7 @@ export default async function ProductsPage() {
   const user = authData?.user;
 
   if (!user) {
-    redirect("/login");
+    redirect('/login');
   }
 
   const userBusinesses = await db
@@ -21,13 +21,13 @@ export default async function ProductsPage() {
     .limit(1);
 
   if (userBusinesses.length === 0) {
-    redirect("/setup");
+    redirect('/setup');
   }
 
   const userProducts = await db
     .select()
     .from(products)
-    .where(eq(products.businessId, userBusinesses[0]?.id || ""));
+    .where(eq(products.businessId, userBusinesses[0]?.id ?? ''));
 
   return (
     <div className="min-h-screen bg-background">
@@ -44,7 +44,7 @@ export default async function ProductsPage() {
           <div className="hidden items-center space-x-3 md:flex">
             <a
               href="/dashboard"
-              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-border bg-card hover:bg-muted px-4 text-sm font-semibold transition-colors"
+              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-border bg-card px-4 text-sm font-semibold transition-colors hover:bg-muted"
             >
               Kembali ke Beranda
             </a>

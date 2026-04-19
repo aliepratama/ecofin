@@ -1,14 +1,14 @@
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
-import { createClient } from "@/libs/supabase/server";
-import { getStakeholderPortfolioAnalyticsAction } from "@/app/(stakeholder)/analytics/actions";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrustScoreDetailChart } from "./TrustScoreDetailChart";
+import { ChevronLeft } from 'lucide-react';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { getStakeholderPortfolioAnalyticsAction } from '@/app/(stakeholder)/analytics/actions';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { createClient } from '@/libs/supabase/server';
+import { TrustScoreDetailChart } from './TrustScoreDetailChart';
 
 function formatCurrency(value: number) {
-  return `Rp ${value.toLocaleString("id-ID")}`;
+  return `Rp ${value.toLocaleString('id-ID')}`;
 }
 
 export default async function StakeholderBusinessDetailPage(props: {
@@ -19,7 +19,7 @@ export default async function StakeholderBusinessDetailPage(props: {
   const { data } = await supabase.auth.getUser();
 
   if (!data.user) {
-    redirect("/login");
+    redirect('/login');
   }
 
   // We can fetch all for now and filter.
@@ -29,14 +29,14 @@ export default async function StakeholderBusinessDetailPage(props: {
 
   if (!business) {
     return (
-      <div className="mx-auto min-h-screen w-full max-w-4xl px-4 py-8 text-center mt-12">
+      <div className="mx-auto mt-12 min-h-screen w-full max-w-4xl px-4 py-8 text-center">
         <h2 className="text-2xl font-bold">UMKM Tidak Ditemukan</h2>
         <p className="mt-2 text-muted-foreground">
           UMKM yang Anda cari tidak tersedia atau belum membagikan datanya.
         </p>
         <Link
           href="/stakeholder/dashboard"
-          className="mt-6 inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+          className="mt-6 inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
         >
           Kembali ke Dashboard
         </Link>
@@ -48,21 +48,21 @@ export default async function StakeholderBusinessDetailPage(props: {
   const minHigh = analytics.minHighTrustScore;
   const tScore = business.trustScore;
 
-  let categoryLabel = "Lemah";
-  let categoryColor: "default" | "destructive" | "outline" | "secondary" =
-    "destructive";
+  let categoryLabel = 'Lemah';
+  let categoryColor: 'default' | 'destructive' | 'outline' | 'secondary' =
+    'destructive';
 
   if (tScore !== null) {
     if (tScore >= minHigh) {
-      categoryLabel = "Dapat dipercaya";
-      categoryColor = "default";
+      categoryLabel = 'Dapat dipercaya';
+      categoryColor = 'default';
     } else if (tScore >= minMedium) {
-      categoryLabel = "Menengah";
-      categoryColor = "secondary";
+      categoryLabel = 'Menengah';
+      categoryColor = 'secondary';
     }
   } else {
-    categoryLabel = "Sedang dikalkulasi";
-    categoryColor = "outline";
+    categoryLabel = 'Sedang dikalkulasi';
+    categoryColor = 'outline';
   }
 
   return (
@@ -70,7 +70,7 @@ export default async function StakeholderBusinessDetailPage(props: {
       <div className="mb-6">
         <Link
           href="/stakeholder/dashboard"
-          className="-ml-4 mb-2 text-muted-foreground inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+          className="mb-2 -ml-4 inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-muted-foreground ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
         >
           <ChevronLeft className="mr-2" />
           Kembali
@@ -79,12 +79,12 @@ export default async function StakeholderBusinessDetailPage(props: {
           {business.businessName}
         </h1>
         <div className="mt-2 flex items-center gap-2">
-          <Badge variant="secondary">Trust Score: {tScore ?? "N/A"}</Badge>
+          <Badge variant="secondary">Trust Score: {tScore ?? 'N/A'}</Badge>
           <Badge variant={categoryColor}>{categoryLabel}</Badge>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -119,8 +119,8 @@ export default async function StakeholderBusinessDetailPage(props: {
             <div
               className={`text-2xl font-bold ${
                 business.netCashflow >= 0
-                  ? "text-emerald-600 dark:text-emerald-500"
-                  : "text-destructive"
+                  ? 'text-emerald-600 dark:text-emerald-500'
+                  : 'text-destructive'
               }`}
             >
               {formatCurrency(business.netCashflow)}
@@ -136,10 +136,10 @@ export default async function StakeholderBusinessDetailPage(props: {
           <CardContent>
             <Badge
               variant={
-                business.transactionCount > 0 ? "default" : "destructive"
+                business.transactionCount > 0 ? 'default' : 'destructive'
               }
             >
-              {business.transactionCount > 0 ? "Aktif" : "Pasif"}
+              {business.transactionCount > 0 ? 'Aktif' : 'Pasif'}
             </Badge>
           </CardContent>
         </Card>
@@ -152,8 +152,8 @@ export default async function StakeholderBusinessDetailPage(props: {
               Diagram Trust Score
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col justify-center">
-            {/* 
+          <CardContent className="flex flex-1 flex-col justify-center">
+            {/*
                 We will display the visual guage component here. 
                 Will pass current score and thresholds to TrustScoreDetailChart 
             */}
@@ -180,7 +180,7 @@ export default async function StakeholderBusinessDetailPage(props: {
                   showTrendOnly={true}
                 />
               ) : (
-                <div className="flex h-full items-center justify-center rounded-lg border border-dashed border-border bg-background text-sm text-muted-foreground pb-4">
+                <div className="flex h-full items-center justify-center rounded-lg border border-dashed border-border bg-background pb-4 text-sm text-muted-foreground">
                   Data transaksi belum tersedia.
                 </div>
               )}

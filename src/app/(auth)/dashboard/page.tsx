@@ -1,10 +1,11 @@
-import { eq, desc } from "drizzle-orm";
-import { redirect } from "next/navigation";
-import { db } from "@/libs/DB";
-import { createClient } from "@/libs/supabase/server";
-import { transactions, businesses, stakeholders } from "@/models/Schema";
-import { calculateTrustScore } from "@/libs/scoring/TrustScore";
-import { DashboardCharts } from "./DashboardCharts";
+import { eq, desc } from 'drizzle-orm';
+import Image from 'next/image';
+import { redirect } from 'next/navigation';
+import { db } from '@/libs/DB';
+import { calculateTrustScore } from '@/libs/scoring/TrustScore';
+import { createClient } from '@/libs/supabase/server';
+import { transactions, businesses, stakeholders } from '@/models/Schema';
+import { DashboardCharts } from './DashboardCharts';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -12,27 +13,29 @@ export default async function DashboardPage() {
   const user = authData?.user;
 
   if (!user) {
-    redirect("/login");
+    redirect('/login');
   }
 
   const userId = user.id;
+
+  const activeBusiness = await db.query.businesses.findFirst({
+    where: eq(businesses.ownerId, userId),
+  });
 
   // Cek apakah ybs adalah stakeholder
   const activeStakeholder = await db.query.stakeholders.findFirst({
     where: eq(stakeholders.userId, userId),
   });
 
-  if (activeStakeholder) {
-    redirect("/stakeholder/dashboard");
+  // Jika bukan owner, dan dia stakeholder, maka arahkan ke stakeholder dashboard.
+  // Jika dia punya business (owner) tapi kebetulan dia juga stakeholder (misal diundang teman),
+  // prioritas kita tetap tampilkan dashboard owner dia sendiri di sini.
+  if (!activeBusiness && activeStakeholder) {
+    redirect('/stakeholder/dashboard');
   }
 
-  // Cek UMKM pertama milik user
-  const activeBusiness = await db.query.businesses.findFirst({
-    where: eq(businesses.ownerId, userId),
-  });
-
   if (!activeBusiness) {
-    redirect("/setup");
+    redirect('/setup');
   }
 
   // Ambil transaksi terbaru (10 terakhir)
@@ -44,17 +47,17 @@ export default async function DashboardPage() {
 
   // Hitung Pemasukan dan Pengeluaran sederhana (Demo)
   const totalIncome = recentTransactions
-    .filter((t) => t.type === "INCOME")
+    .filter((t) => t.type === 'INCOME')
     .reduce((acc, curr) => acc + Number(curr.totalAmount), 0);
 
   const totalExpense = recentTransactions
-    .filter((t) => t.type === "EXPENSE")
+    .filter((t) => t.type === 'EXPENSE')
     .reduce((acc, curr) => acc + Number(curr.totalAmount), 0);
 
   const netProfit = totalIncome - totalExpense;
   const trustScore = calculateTrustScore(
     recentTransactions as any,
-    activeBusiness,
+    activeBusiness
   );
 
   // Jangan blokir render awal dengan call AI. Pindahkan fetching AI ke komponen Client (SWR/React Query) atau buang await di atas.
@@ -70,21 +73,21 @@ export default async function DashboardPage() {
   // const insights = null; // AI Insight dimatikan sementara di SSR agar login instan
 
   const plText =
-    "Berdasarkan penjualan minggu ini, laba bersih akhir bulan diproyeksi stabil. Anda berada di jalur aman.";
+    'Berdasarkan penjualan minggu ini, laba bersih akhir bulan diproyeksi stabil. Anda berada di jalur aman.';
   const plProgress = 80;
   const demandText =
-    "Prediksi cuaca cerah dan histori penjualan baik. Tingkatkan stok untuk menghadapi potensi keramaian.";
+    'Prediksi cuaca cerah dan histori penjualan baik. Tingkatkan stok untuk menghadapi potensi keramaian.';
 
   const getTransactionLabel = (inputMethod: string) => {
-    if (inputMethod === "OCR") {
-      return "Nota/Struk";
+    if (inputMethod === 'OCR') {
+      return 'Nota/Struk';
     }
 
-    if (inputMethod === "VOICE") {
-      return "Pencatatan AI";
+    if (inputMethod === 'VOICE') {
+      return 'Pencatatan AI';
     }
 
-    return "Manual";
+    return 'Manual';
   };
 
   return (
@@ -92,13 +95,22 @@ export default async function DashboardPage() {
       {/* Header */}
       <header className="border-b border-border bg-card px-4 py-5 shadow-sm sm:px-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground md:text-3xl">
-              Ringkasan usaha
-            </h1>
-            <p className="mt-1 text-base text-muted-foreground">
-              Pantau omzet, pengeluaran, dan skor pinjaman harian
-            </p>
+          <div className="flex items-center space-x-3">
+            <Image
+              src="/logo.png"
+              alt="Ecofin Logo"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
+            <div>
+              <h1 className="text-2xl font-bold text-foreground md:text-3xl">
+                Ringkasan usaha
+              </h1>
+              <p className="mt-1 text-base text-muted-foreground">
+                Pantau omzet, pengeluaran, dan skor pinjaman harian
+              </p>
+            </div>
           </div>
 
           <div className="hidden items-center space-x-3 md:flex">
@@ -272,7 +284,7 @@ export default async function DashboardPage() {
               </svg>
             </div>
             <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">
-              Rp {totalIncome.toLocaleString("id-ID")}
+              Rp {totalIncome.toLocaleString('id-ID')}
             </p>
           </div>
           {/* Expense Card */}
@@ -296,7 +308,7 @@ export default async function DashboardPage() {
               </svg>
             </div>
             <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">
-              Rp {totalExpense.toLocaleString("id-ID")}
+              Rp {totalExpense.toLocaleString('id-ID')}
             </p>
           </div>
           {/* Net Profit Card */}
@@ -320,7 +332,7 @@ export default async function DashboardPage() {
               </svg>
             </div>
             <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">
-              Rp {netProfit.toLocaleString("id-ID")}
+              Rp {netProfit.toLocaleString('id-ID')}
             </p>
           </div>
         </div>
@@ -392,7 +404,7 @@ export default async function DashboardPage() {
               <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
                 <span className="font-bold text-foreground">
                   Rekomendasi AI:
-                </span>{" "}
+                </span>{' '}
                 {demandText}
               </p>
             </div>
@@ -445,21 +457,21 @@ export default async function DashboardPage() {
                         {getTransactionLabel(trx.inputMethod)}
                       </td>
                       <td className="px-6 py-4 text-muted-foreground">
-                        {trx.date.toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
+                        {trx.date.toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
                         })}
                       </td>
                       <td className="px-6 py-4">
                         <span
                           className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${
-                            trx.type === "INCOME"
-                              ? "border-foreground bg-foreground text-background"
-                              : "border-border bg-muted text-foreground"
+                            trx.type === 'INCOME'
+                              ? 'border-foreground bg-foreground text-background'
+                              : 'border-border bg-muted text-foreground'
                           }`}
                         >
-                          {trx.type === "INCOME" ? "Pemasukan" : "Pengeluaran"}
+                          {trx.type === 'INCOME' ? 'Pemasukan' : 'Pengeluaran'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -468,8 +480,8 @@ export default async function DashboardPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right font-bold text-foreground">
-                        {trx.type === "INCOME" ? "+" : "-"}Rp{" "}
-                        {Number(trx.totalAmount).toLocaleString("id-ID")}
+                        {trx.type === 'INCOME' ? '+' : '-'}Rp{' '}
+                        {Number(trx.totalAmount).toLocaleString('id-ID')}
                       </td>
                     </tr>
                   ))

@@ -1,25 +1,25 @@
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
-import QRCode from "qrcode";
-import { Button } from "@/components/ui/button";
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
+import QRCode from 'qrcode';
+import {
+  getStakeholderPortfolioAnalyticsAction,
+  updateInstitutionNameAction,
+  updateTrustScoreSettingsAction,
+} from '@/app/(stakeholder)/analytics/actions';
+import { createStakeholderInviteCodeAction } from '@/app/(stakeholder)/link/actions';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Env } from "@/libs/Env";
-import { createClient } from "@/libs/supabase/server";
-import {
-  getStakeholderPortfolioAnalyticsAction,
-  updateInstitutionNameAction,
-  updateTrustScoreSettingsAction,
-} from "@/app/(stakeholder)/analytics/actions";
-import { createStakeholderInviteCodeAction } from "@/app/(stakeholder)/link/actions";
-import { QrCodeModal } from "./QrCodeModal";
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Env } from '@/libs/Env';
+import { createClient } from '@/libs/supabase/server';
+import { QrCodeModal } from './QrCodeModal';
 
 export default async function StakeholderSettingsPage(props: {
   readonly searchParams: Promise<{
@@ -30,7 +30,7 @@ export default async function StakeholderSettingsPage(props: {
   const { data } = await supabase.auth.getUser();
 
   if (!data.user) {
-    redirect("/login");
+    redirect('/login');
   }
 
   const [{ code }, analytics] = await Promise.all([
@@ -39,22 +39,22 @@ export default async function StakeholderSettingsPage(props: {
   ]);
 
   const requestHeaders = await headers();
-  const forwardedHost = requestHeaders.get("x-forwarded-host");
-  const host = forwardedHost || requestHeaders.get("host");
-  const forwardedProto = requestHeaders.get("x-forwarded-proto");
-  const protocol = forwardedProto || "https";
-  const fallbackAppUrl = host ? `${protocol}://${host}` : "";
-  const appUrl = Env.NEXT_PUBLIC_APP_URL || fallbackAppUrl;
+  const forwardedHost = requestHeaders.get('x-forwarded-host');
+  const host = forwardedHost ?? requestHeaders.get('host');
+  const forwardedProto = requestHeaders.get('x-forwarded-proto');
+  const protocol = forwardedProto ?? 'https';
+  const fallbackAppUrl = host ? `${protocol}://${host}` : '';
+  const appUrl = Env.NEXT_PUBLIC_APP_URL ?? fallbackAppUrl;
 
   const inviteLink = code
     ? `${appUrl}/stakeholder-link?inviteCode=${encodeURIComponent(code)}`
-    : "";
+    : '';
 
   const inviteQrDataUrl = code
     ? await QRCode.toDataURL(inviteLink || code, {
         width: 256,
         margin: 1,
-        errorCorrectionLevel: "M",
+        errorCorrectionLevel: 'M',
       })
     : null;
 
@@ -82,17 +82,17 @@ export default async function StakeholderSettingsPage(props: {
           <CardContent>
             <form
               action={async (formData) => {
-                "use server";
+                'use server';
                 await updateInstitutionNameAction(formData);
                 const currentCode =
-                  formData.get("currentCode")?.toString() || "";
+                  formData.get('currentCode')?.toString() ?? '';
                 redirect(
-                  `/stakeholder/settings${currentCode ? `?code=${currentCode}` : ""}`,
+                  `/stakeholder/settings${currentCode ? `?code=${currentCode}` : ''}`
                 );
               }}
               className="flex flex-col gap-4"
             >
-              <input type="hidden" name="currentCode" value={code || ""} />
+              <input type="hidden" name="currentCode" value={code ?? ''} />
               <div className="flex flex-col gap-2">
                 <Label htmlFor="institutionName">Nama institusi</Label>
                 <Input
@@ -127,7 +127,7 @@ export default async function StakeholderSettingsPage(props: {
           <CardContent>
             <form
               action={async (formData) => {
-                "use server";
+                'use server';
                 const result =
                   await createStakeholderInviteCodeAction(formData);
                 redirect(`/stakeholder/settings?code=${result.code}`);
@@ -150,7 +150,7 @@ export default async function StakeholderSettingsPage(props: {
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                   {/* Metode 1: Kode Undangan */}
                   <div className="flex flex-col gap-2 rounded-lg border border-border bg-background p-4 shadow-sm">
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
                       Metode 1: Kode
                     </p>
                     <p className="mt-1 text-2xl font-bold tracking-wide text-foreground">
@@ -163,10 +163,10 @@ export default async function StakeholderSettingsPage(props: {
 
                   {/* Metode 2: Share Link */}
                   <div className="flex flex-col gap-2 rounded-lg border border-border bg-background p-4 shadow-sm">
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
                       Metode 2: Link
                     </p>
-                    <p className="mt-1 break-all rounded-md bg-muted p-2 font-mono text-xs text-foreground">
+                    <p className="mt-1 rounded-md bg-muted p-2 font-mono text-xs break-all text-foreground">
                       {inviteLink || code}
                     </p>
                     <p className="mt-auto text-xs text-muted-foreground">
@@ -176,7 +176,7 @@ export default async function StakeholderSettingsPage(props: {
 
                   {/* Metode 3: QR Code */}
                   <div className="flex flex-col gap-2 rounded-lg border border-border bg-background p-4 shadow-sm">
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
                       Metode 3: QR Code
                     </p>
                     <div className="mt-1 flex justify-start">
@@ -206,9 +206,9 @@ export default async function StakeholderSettingsPage(props: {
           <CardContent>
             <form
               action={async (formData) => {
-                "use server";
+                'use server';
                 await updateTrustScoreSettingsAction(formData);
-                redirect("/stakeholder/settings");
+                redirect('/stakeholder/settings');
               }}
               className="flex flex-col gap-4"
             >

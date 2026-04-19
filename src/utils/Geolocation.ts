@@ -1,16 +1,16 @@
-export interface GeolocationData {
+export type GeolocationData = {
   latitude: number | null;
   longitude: number | null;
   error?: string;
-}
+};
 
-export function getCurrentLocation(): Promise<GeolocationData> {
+export async function getCurrentLocation(): Promise<GeolocationData> {
   return new Promise((resolve) => {
-    if (typeof window === "undefined" || !navigator.geolocation) {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
       resolve({
         latitude: null,
         longitude: null,
-        error: "Geolocation is not supported by your browser",
+        error: 'Geolocation is not supported by your browser',
       });
       return;
     }
@@ -23,17 +23,20 @@ export function getCurrentLocation(): Promise<GeolocationData> {
         });
       },
       (error) => {
-        let errorMessage = "An unknown error occurred.";
+        let errorMessage = 'An unknown error occurred.';
         switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = "User denied the request for Geolocation.";
+          case error.PERMISSION_DENIED: {
+            errorMessage = 'User denied the request for Geolocation.';
             break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = "Location information is unavailable.";
+          }
+          case error.POSITION_UNAVAILABLE: {
+            errorMessage = 'Location information is unavailable.';
             break;
-          case error.TIMEOUT:
-            errorMessage = "The request to get user location timed out.";
+          }
+          case error.TIMEOUT: {
+            errorMessage = 'The request to get user location timed out.';
             break;
+          }
         }
         resolve({
           latitude: null,
@@ -42,10 +45,10 @@ export function getCurrentLocation(): Promise<GeolocationData> {
         });
       },
       {
-        timeout: 10000,
+        timeout: 10_000,
         maximumAge: 0,
         enableHighAccuracy: true,
-      },
+      }
     );
   });
 }

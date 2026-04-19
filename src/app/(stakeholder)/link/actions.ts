@@ -1,21 +1,21 @@
-"use server";
+'use server';
 
-import { and, desc, eq, inArray } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
-import { db } from "@/libs/DB";
-import { createClient } from "@/libs/supabase/server";
+import { and, desc, eq, inArray } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
+import { db } from '@/libs/DB';
+import { createClient } from '@/libs/supabase/server';
 import {
   businesses,
   stakeholderBusinesses,
   stakeholderInvites,
   stakeholders,
   users,
-} from "@/models/Schema";
+} from '@/models/Schema';
 
 const INVITE_EXPIRY_DAYS = 7;
 
 function generateInviteCode() {
-  const raw = crypto.randomUUID().replaceAll("-", "").slice(0, 8);
+  const raw = crypto.randomUUID().replaceAll('-', '').slice(0, 8);
   return raw.toUpperCase();
 }
 
@@ -26,7 +26,7 @@ async function ensureUserExists() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("Unauthorized");
+    throw new Error('Unauthorized');
   }
 
   const existingUser = await db.query.users.findFirst({
@@ -63,7 +63,7 @@ async function ensureStakeholder(userId: string, institutionName: string) {
     .returning();
 
   if (!newStakeholder) {
-    throw new Error("Gagal membuat profil stakeholder");
+    throw new Error('Gagal membuat profil stakeholder');
   }
 
   return newStakeholder;
@@ -71,8 +71,8 @@ async function ensureStakeholder(userId: string, institutionName: string) {
 
 export async function createStakeholderInviteCodeAction(formData: FormData) {
   const user = await ensureUserExists();
-  const institutionNameRaw = formData.get("institutionName") as string | null;
-  const institutionName = institutionNameRaw?.trim() || "Lender Partner";
+  const institutionNameRaw = formData.get('institutionName') as string | null;
+  const institutionName = institutionNameRaw?.trim() ?? 'Lender Partner';
 
   const stakeholder = await ensureStakeholder(user.id, institutionName);
   const expiresAt = new Date();
@@ -84,10 +84,10 @@ export async function createStakeholderInviteCodeAction(formData: FormData) {
     stakeholderId: stakeholder.id,
     code,
     expiresAt,
-    status: "ACTIVE",
+    status: 'ACTIVE',
   });
 
-  revalidatePath("/stakeholder/dashboard");
+  revalidatePath('/stakeholder/dashboard');
 
   return {
     code,
@@ -98,10 +98,10 @@ export async function createStakeholderInviteCodeAction(formData: FormData) {
 
 export async function claimStakeholderInviteAction(formData: FormData) {
   const user = await ensureUserExists();
-  const rawCode = formData.get("inviteCode") as string | null;
+  const rawCode = formData.get('inviteCode') as string | null;
 
   if (!rawCode) {
-    throw new Error("Kode undangan wajib diisi");
+    throw new Error('Kode undangan wajib diisi');
   }
 
   const inviteCode = rawCode.trim().toUpperCase();
@@ -112,20 +112,20 @@ export async function claimStakeholderInviteAction(formData: FormData) {
   });
 
   if (!invite) {
-    throw new Error("Kode tidak ditemukan");
+    throw new Error('Kode tidak ditemukan');
   }
 
-  if (invite.status !== "ACTIVE") {
-    throw new Error("Kode sudah tidak aktif");
+  if (invite.status !== 'ACTIVE') {
+    throw new Error('Kode sudah tidak aktif');
   }
 
   if (invite.expiresAt < new Date()) {
     await db
       .update(stakeholderInvites)
-      .set({ status: "EXPIRED" })
+      .set({ status: 'EXPIRED' })
       .where(eq(stakeholderInvites.id, invite.id));
 
-    throw new Error("Kode sudah kedaluwarsa");
+    throw new Error('Kode sudah kedaluwarsa');
   }
 
   const ownedBusinesses = await db.query.businesses.findMany({
@@ -133,7 +133,7 @@ export async function claimStakeholderInviteAction(formData: FormData) {
   });
 
   if (ownedBusinesses.length === 0) {
-    throw new Error("Buat profil usaha dulu sebelum menghubungkan lender");
+    throw new Error('Buat profil usaha dulu sebelum menghubungkan lender');
   }
 
   const businessIds = ownedBusinesses.map((business) => business.id);
@@ -141,12 +141,12 @@ export async function claimStakeholderInviteAction(formData: FormData) {
   const existingLinks = await db.query.stakeholderBusinesses.findMany({
     where: and(
       eq(stakeholderBusinesses.stakeholderId, invite.stakeholderId),
-      inArray(stakeholderBusinesses.businessId, businessIds),
+      inArray(stakeholderBusinesses.businessId, businessIds)
     ),
   });
 
   const linkedBusinessSet = new Set(
-    existingLinks.map((existingLink) => existingLink.businessId),
+    existingLinks.map((existingLink) => existingLink.businessId)
   );
 
   const newLinks = ownedBusinesses
@@ -163,14 +163,14 @@ export async function claimStakeholderInviteAction(formData: FormData) {
   await db
     .update(stakeholderInvites)
     .set({
-      status: "CLAIMED",
+      status: 'CLAIMED',
       claimedBusinessId: ownedBusinesses[0]?.id,
       claimedAt: new Date(),
     })
     .where(eq(stakeholderInvites.id, invite.id));
 
-  revalidatePath("/dashboard");
-  revalidatePath("/stakeholder/dashboard");
+  revalidatePath('/dashboard');
+  revalidatePath('/stakeholder/dashboard');
 
   return {
     linkedCount: ownedBusinesses.length,

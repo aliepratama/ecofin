@@ -269,7 +269,6 @@ After defining the environment variables in your GitHub Actions, your localizati
 │   ├── app                         # Next JS App (App Router)
 │   ├── components                  # React components
 │   ├── libs                        # 3rd party libraries configuration
-│   ├── locales                     # Locales folder (i18n messages)
 │   ├── models                      # Database models
 │   ├── styles                      # Styles folder
 │   ├── templates                   # Templates folder

@@ -1,4 +1,5 @@
-import { AppConfig } from "@/utils/AppConfig";
+import Image from 'next/image';
+import { AppConfig } from '@/utils/AppConfig';
 
 export const BaseTemplate = (props: {
   leftNav: React.ReactNode;
@@ -9,9 +10,18 @@ export const BaseTemplate = (props: {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-6">
-          <h1 className="text-2xl font-extrabold tracking-tight">
-            {AppConfig.name}
-          </h1>
+          <div className="flex items-center gap-2">
+            <Image
+              src="/logo.png"
+              alt="Ecofin Logo"
+              width={32}
+              height={32}
+              className="object-contain"
+            />
+            <h1 className="text-2xl font-extrabold tracking-tight">
+              {AppConfig.name}
+            </h1>
+          </div>
           <nav className="hidden md:block">
             <ul className="flex flex-wrap items-center gap-x-6 text-sm font-medium text-muted-foreground">
               {props.leftNav}
@@ -21,7 +31,7 @@ export const BaseTemplate = (props: {
 
         <div className="flex items-center gap-2 sm:gap-4">
           <nav>
-            <ul className="flex flex-wrap items-center gap-x-2 sm:gap-x-4 text-sm font-medium">
+            <ul className="flex flex-wrap items-center gap-x-2 text-sm font-medium sm:gap-x-4">
               {props.rightNav}
             </ul>
           </nav>

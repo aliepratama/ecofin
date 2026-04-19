@@ -1,21 +1,21 @@
-"use server";
+'use server';
 
-import { and, desc, eq, inArray, gte } from "drizzle-orm";
-import { db } from "@/libs/DB";
-import { createClient } from "@/libs/supabase/server";
-import { redirect } from "next/navigation";
+import { and, desc, eq, inArray, gte } from 'drizzle-orm';
+import { redirect } from 'next/navigation';
+import { db } from '@/libs/DB';
+import { createClient } from '@/libs/supabase/server';
 import {
   businesses,
   creditScores,
   stakeholderBusinesses,
   stakeholders,
   transactions,
-} from "@/models/Schema";
+} from '@/models/Schema';
 
 export async function signOutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect("/login");
+  redirect('/login');
 }
 
 type BusinessAggregate = {
@@ -56,7 +56,7 @@ async function getAuthenticatedUserId() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("Unauthorized");
+    throw new Error('Unauthorized');
   }
 
   return user.id;
@@ -64,11 +64,11 @@ async function getAuthenticatedUserId() {
 
 export async function updateTrustScoreSettingsAction(formData: FormData) {
   const userId = await getAuthenticatedUserId();
-  const minMedium = parseInt(formData.get("minMedium") as string, 10);
-  const minHigh = parseInt(formData.get("minHigh") as string, 10);
+  const minMedium = Number.parseInt(formData.get('minMedium') as string, 10);
+  const minHigh = Number.parseInt(formData.get('minHigh') as string, 10);
 
   if (isNaN(minMedium) || isNaN(minHigh) || minMedium >= minHigh) {
-    throw new Error("Range nilai tidak valid.");
+    throw new Error('Range nilai tidak valid.');
   }
 
   await db
@@ -79,10 +79,10 @@ export async function updateTrustScoreSettingsAction(formData: FormData) {
 
 export async function updateInstitutionNameAction(formData: FormData) {
   const userId = await getAuthenticatedUserId();
-  const institutionName = formData.get("institutionName")?.toString().trim();
+  const institutionName = formData.get('institutionName')?.toString().trim();
 
   if (!institutionName || institutionName.length < 3) {
-    throw new Error("Nama institusi minimal 3 karakter");
+    throw new Error('Nama institusi minimal 3 karakter');
   }
 
   await db
@@ -100,7 +100,7 @@ export async function getStakeholderPortfolioAnalyticsAction(): Promise<Stakehol
 
   if (!stakeholder) {
     return {
-      institutionName: "",
+      institutionName: '',
       minMediumTrustScore: 40,
       minHighTrustScore: 70,
       linkedBusinesses: [],
@@ -144,7 +144,7 @@ export async function getStakeholderPortfolioAnalyticsAction(): Promise<Stakehol
   const recentTransactions = await db.query.transactions.findMany({
     where: and(
       inArray(transactions.businessId, businessIds),
-      gte(transactions.date, sixMonthsAgo),
+      gte(transactions.date, sixMonthsAgo)
     ),
     orderBy: [desc(transactions.date)],
   });
@@ -164,21 +164,21 @@ export async function getStakeholderPortfolioAnalyticsAction(): Promise<Stakehol
   const linkedBusinesses: BusinessAggregate[] = linkedBusinessRows.map(
     (business) => {
       const items = recentTransactions.filter(
-        (transaction) => transaction.businessId === business.id,
+        (transaction) => transaction.businessId === business.id
       );
 
       const totalRevenue = items
-        .filter((transaction) => transaction.type === "INCOME")
+        .filter((transaction) => transaction.type === 'INCOME')
         .reduce((sum, transaction) => sum + Number(transaction.totalAmount), 0);
 
       const totalExpense = items
-        .filter((transaction) => transaction.type === "EXPENSE")
+        .filter((transaction) => transaction.type === 'EXPENSE')
         .reduce((sum, transaction) => sum + Number(transaction.totalAmount), 0);
 
       const aiValidatedCount = items.filter(
         (transaction) =>
-          transaction.inputMethod === "VOICE" ||
-          transaction.inputMethod === "OCR",
+          transaction.inputMethod === 'VOICE' ||
+          transaction.inputMethod === 'OCR'
       ).length;
 
       const transactionCount = items.length;
@@ -189,9 +189,9 @@ export async function getStakeholderPortfolioAnalyticsAction(): Promise<Stakehol
 
       const itemMonthlyMap = new Map<string, MonthlyAggregate>();
       for (const transaction of items) {
-        const monthKey = transaction.date.toLocaleDateString("id-ID", {
-          month: "short",
-          year: "numeric",
+        const monthKey = transaction.date.toLocaleDateString('id-ID', {
+          month: 'short',
+          year: 'numeric',
         });
 
         if (!itemMonthlyMap.has(monthKey)) {
@@ -203,14 +203,14 @@ export async function getStakeholderPortfolioAnalyticsAction(): Promise<Stakehol
         }
         const row = itemMonthlyMap.get(monthKey);
         if (row) {
-          if (transaction.type === "INCOME") {
+          if (transaction.type === 'INCOME') {
             row.revenue += Number(transaction.totalAmount);
           } else {
             row.expense += Number(transaction.totalAmount);
           }
         }
       }
-      const monthlyTrend = Array.from(itemMonthlyMap.values()).reverse();
+      const monthlyTrend = [...itemMonthlyMap.values()].toReversed();
 
       return {
         businessId: business.id,
@@ -223,15 +223,15 @@ export async function getStakeholderPortfolioAnalyticsAction(): Promise<Stakehol
         trustScore: latestScoreMap.get(business.id) ?? null,
         monthlyTrend,
       };
-    },
+    }
   );
 
   const monthlyMap = new Map<string, MonthlyAggregate>();
 
   for (const transaction of recentTransactions) {
-    const monthKey = transaction.date.toLocaleDateString("id-ID", {
-      month: "short",
-      year: "numeric",
+    const monthKey = transaction.date.toLocaleDateString('id-ID', {
+      month: 'short',
+      year: 'numeric',
     });
 
     if (!monthlyMap.has(monthKey)) {
@@ -247,22 +247,22 @@ export async function getStakeholderPortfolioAnalyticsAction(): Promise<Stakehol
       continue;
     }
 
-    if (transaction.type === "INCOME") {
+    if (transaction.type === 'INCOME') {
       row.revenue += Number(transaction.totalAmount);
     } else {
       row.expense += Number(transaction.totalAmount);
     }
   }
 
-  const monthlyTrend = Array.from(monthlyMap.values()).reverse();
+  const monthlyTrend = [...monthlyMap.values()].toReversed();
 
   const portfolioRevenue = linkedBusinesses.reduce(
     (sum, item) => sum + item.totalRevenue,
-    0,
+    0
   );
   const portfolioExpense = linkedBusinesses.reduce(
     (sum, item) => sum + item.totalExpense,
-    0,
+    0
   );
   const portfolioNetCashflow = portfolioRevenue - portfolioExpense;
 
@@ -274,7 +274,7 @@ export async function getStakeholderPortfolioAnalyticsAction(): Promise<Stakehol
     trustScoreValues.length > 0
       ? Math.round(
           trustScoreValues.reduce((sum, value) => sum + value, 0) /
-            trustScoreValues.length,
+            trustScoreValues.length
         )
       : null;
 
@@ -283,8 +283,8 @@ export async function getStakeholderPortfolioAnalyticsAction(): Promise<Stakehol
       ? Math.round(
           linkedBusinesses.reduce(
             (sum, item) => sum + item.aiValidationRatio,
-            0,
-          ) / linkedBusinesses.length,
+            0
+          ) / linkedBusinesses.length
         )
       : 0;
 

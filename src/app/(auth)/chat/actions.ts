@@ -1,22 +1,22 @@
-"use server";
+'use server';
 
-import { eq } from "drizzle-orm";
-import { parseTransactionFromText } from "@/libs/ai/gemini-service";
-import { db } from "@/libs/DB";
-import { createClient } from "@/libs/supabase/server";
+import { eq } from 'drizzle-orm';
+import { parseTransactionFromText } from '@/libs/ai/gemini-service';
+import { db } from '@/libs/DB';
+import { createClient } from '@/libs/supabase/server';
 import {
   businesses,
   transactions,
   products,
   transactionDetails,
-} from "@/models/Schema";
+} from '@/models/Schema';
 
 export async function sendChatMessage(
   input: string,
-  location?: { latitude: string; longitude: string },
+  location?: { latitude: string; longitude: string }
 ) {
-  if (!input || input.trim() === "") {
-    return { success: false, message: "Input tidak boleh kosong" };
+  if (!input || input.trim() === '') {
+    return { success: false, message: 'Input tidak boleh kosong' };
   }
 
   const supabase = await createClient();
@@ -25,7 +25,7 @@ export async function sendChatMessage(
   if (authError || !authData?.user) {
     return {
       success: false,
-      message: "Sesi Anda telah berakhir, silakan login kembali.",
+      message: 'Sesi Anda telah berakhir, silakan login kembali.',
     };
   }
 
@@ -38,7 +38,7 @@ export async function sendChatMessage(
   if (!activeBusiness) {
     return {
       success: false,
-      message: "Anda belum mendaftarkan Bisnis Anda.",
+      message: 'Anda belum mendaftarkan Bisnis Anda.',
     };
   }
 
@@ -48,7 +48,7 @@ export async function sendChatMessage(
     return {
       success: false,
       message:
-        "Gagal menguraikan maksud transaksi. Coba ulangi dengan kalimat yang lebih jelas.",
+        'Gagal menguraikan maksud transaksi. Coba ulangi dengan kalimat yang lebih jelas.',
     };
   }
 
@@ -61,10 +61,10 @@ export async function sendChatMessage(
           userId: userId,
           type: parsedData.type,
           totalAmount: parsedData.amount.toString(),
-          inputMethod: "VOICE", // Or 'MANUAL' actually since they type it, but the AI parses it. 'VOICE' is matching our intent.
-          latitudeCaptured: location?.latitude ? location.latitude : null,
-          longitudeCaptured: location?.longitude ? location.longitude : null,
-          syncStatus: "synced",
+          inputMethod: 'VOICE', // Or 'MANUAL' actually since they type it, but the AI parses it. 'VOICE' is matching our intent.
+          latitudeCaptured: location?.latitude ?? null,
+          longitudeCaptured: location?.longitude ?? null,
+          syncStatus: 'synced',
         })
         .returning();
 
@@ -73,9 +73,10 @@ export async function sendChatMessage(
           ? parsedData.items
           : [
               {
-                itemName: parsedData.description || "Pencatatan AI",
+                itemName: parsedData.description || 'Pencatatan AI',
                 quantity: 1,
-                unit: "pcs",
+                price: parsedData.amount,
+                unit: 'pcs',
               },
             ];
 
@@ -90,32 +91,49 @@ export async function sendChatMessage(
             .values({
               businessId: activeBusiness.id,
               name: item.itemName,
-              price: parsedData.amount.toString(), // Simplify default price
+              price:
+                item.price !== undefined
+                  ? item.price.toString()
+                  : parsedData.amount.toString(),
               currentStock:
-                parsedData.type === "INCOME" ? -item.quantity : item.quantity,
-              unit: item.unit || "pcs",
+                parsedData.type === 'INCOME'
+                  ? -item.quantity
+                  : Math.max(0, item.quantity),
+              unit: item.unit ?? 'pcs',
             })
             .returning();
           activeProduct = insertedProduct;
         } else {
+          const stockChange =
+            parsedData.type === 'INCOME' ? -item.quantity : item.quantity;
+          const newStock = Math.max(
+            0,
+            activeProduct.currentStock + stockChange
+          );
           await tx
             .update(products)
             .set({
-              currentStock:
-                activeProduct.currentStock +
-                (parsedData.type === "INCOME" ? -item.quantity : item.quantity),
+              currentStock: newStock,
             })
             .where(eq(products.id, activeProduct.id));
         }
 
-        if (!newTx) throw new Error("Failed to insert transaction");
-        if (!activeProduct) throw new Error("Failed to insert/find product");
+        if (!newTx) {
+          throw new Error('Failed to insert transaction');
+        }
+        if (!activeProduct) {
+          throw new Error('Failed to insert/find product');
+        }
 
+        const subtotal =
+          item.price !== undefined
+            ? item.price * item.quantity
+            : parsedData.amount;
         await tx.insert(transactionDetails).values({
           transactionId: newTx.id,
           productId: activeProduct.id,
           quantity: item.quantity,
-          subtotal: parsedData.amount.toString(), // Simplification if only one item mostly
+          subtotal: subtotal.toString(),
         });
       }
     });
@@ -123,13 +141,13 @@ export async function sendChatMessage(
     return {
       success: true,
       data: parsedData,
-      message: `Sip! Transaksi ${parsedData.type === "EXPENSE" ? "pengeluaran" : "pemasukan"} sebesar Rp ${parsedData.amount.toLocaleString("id-ID")} berhasil dicatat.`,
+      message: `Sip! Transaksi ${parsedData.type === 'EXPENSE' ? 'pengeluaran' : 'pemasukan'} sebesar Rp ${parsedData.amount.toLocaleString('id-ID')} berhasil dicatat.`,
     };
   } catch (dbError) {
-    console.error("Insert error:", dbError);
+    console.error('Insert error:', dbError);
     return {
       success: false,
-      message: "Gagal menyimpan transaksi ke database. Periksa koneksi Anda.",
+      message: 'Gagal menyimpan transaksi ke database. Periksa koneksi Anda.',
     };
   }
 }

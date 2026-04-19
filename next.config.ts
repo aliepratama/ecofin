@@ -1,26 +1,25 @@
-import withBundleAnalyzer from "@next/bundle-analyzer";
-import { withSentryConfig } from "@sentry/nextjs";
-import withPWA, { runtimeCaching } from "@ducanh2912/next-pwa";
-import type { NextConfig } from "next";
-import "./src/libs/Env";
+import withPWA, { runtimeCaching } from '@ducanh2912/next-pwa';
+import withBundleAnalyzer from '@next/bundle-analyzer';
+import { withSentryConfig } from '@sentry/nextjs';
+import type { NextConfig } from 'next';
+import './src/libs/Env';
 
 // Define the base Next.js configuration
 const baseConfig: NextConfig = {
   devIndicators: {
-    position: "bottom-right",
+    position: 'bottom-right',
   },
   poweredByHeader: false,
   reactStrictMode: true,
-  reactCompiler: process.env.NODE_ENV === "production", // Keep the development environment fast
+  reactCompiler: process.env.NODE_ENV === 'production', // Keep the development environment fast
   outputFileTracingIncludes: {
-    "/": ["./migrations/**/*"],
+    '/': ['./migrations/**/*'],
   },
 };
 
-// Initialize the Next-Intl plugin
 let configWithPlugins = baseConfig;
 // Conditionally enable bundle analysis
-if (process.env.ANALYZE === "true") {
+if (process.env.ANALYZE === 'true') {
   configWithPlugins = withBundleAnalyzer()(configWithPlugins);
 }
 
@@ -45,7 +44,7 @@ if (!process.env.NEXT_PUBLIC_SENTRY_DISABLED) {
     // This can increase your server load as well as your hosting bill.
     // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
     // side errors will fail.
-    tunnelRoute: "/monitoring",
+    tunnelRoute: '/monitoring',
 
     webpack: {
       reactComponentAnnotation: {
@@ -64,21 +63,21 @@ if (!process.env.NEXT_PUBLIC_SENTRY_DISABLED) {
 }
 
 const pwaPlugin = withPWA({
-  dest: "public",
-  disable: process.env.NODE_ENV === "development",
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
   register: true,
   cacheOnFrontEndNav: true,
   fallbacks: {
-    document: "/_offline",
+    document: '/_offline',
   },
   workboxOptions: {
     runtimeCaching: [
       ...runtimeCaching,
       {
         urlPattern: /\/(dashboard|scan|chat)(\/)?$/,
-        handler: "NetworkFirst",
+        handler: 'NetworkFirst',
         options: {
-          cacheName: "app-auth-pages",
+          cacheName: 'app-auth-pages',
           networkTimeoutSeconds: 4,
           expiration: {
             maxEntries: 24,

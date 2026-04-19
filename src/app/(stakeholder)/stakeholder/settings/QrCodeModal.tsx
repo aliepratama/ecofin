@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { Download, Maximize2 } from "lucide-react";
+import { Download, Maximize2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/dialog';
 
 export function QrCodeModal({ qrDataUrl }: { readonly qrDataUrl: string }) {
   return (
@@ -40,10 +40,10 @@ export function QrCodeModal({ qrDataUrl }: { readonly qrDataUrl: string }) {
           type="button"
           className="w-full gap-2 rounded-xl py-6 font-semibold"
           onClick={() => {
-            const a = document.createElement("a");
+            const a = document.createElement('a');
             a.href = qrDataUrl;
-            a.download = "stakeholder-invite-qr.png";
-            document.body.appendChild(a);
+            a.download = 'stakeholder-invite-qr.png';
+            document.body.append(a);
             a.click();
             document.body.removeChild(a);
           }}

@@ -1,7 +1,7 @@
-"use server";
+'use server';
 
-import { createClient } from "@/libs/supabase/server";
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type } from '@google/genai';
+import { createClient } from '@/libs/supabase/server';
 
 export async function getDashboardInsights() {
   const supabase = await createClient();
@@ -9,10 +9,12 @@ export async function getDashboardInsights() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) {
+    return null;
+  }
 
   const { data: transactions } = await supabase
-    .from("transactions")
+    .from('transactions')
     .select(
       `
       type,
@@ -21,23 +23,25 @@ export async function getDashboardInsights() {
       transaction_details(
         quantity, subtotal, products(name)
       )
-    `,
+    `
     )
     .limit(30)
-    .order("date", { ascending: false });
+    .order('date', { ascending: false });
 
-  if (!transactions || transactions.length === 0) return null;
+  if (!transactions || transactions.length === 0) {
+    return null;
+  }
 
   const ai = new GoogleGenAI({});
 
-  const prompt = `Anda adalah analis ahli keuangan AI untuk UMKM F&B. Buat 1) prediksi laba (P&L forecast), 2) prediksi permintaan (demand forecast), dan 3) estimasi progress bulanan dalam persentase (1-100) menggunakan data transaksi terbaru ini. Gunakan bahasa Indonesia santai namun profesional bagi penjual. \nData transaksi: ${JSON.stringify(transactions.map((t) => ({ total: t.total_amount, tipe: t.type, tgl: t.date, item: t.transaction_details?.map((d) => (d.products as any)?.name).join(", ") })))}`;
+  const prompt = `Anda adalah analis ahli keuangan AI untuk UMKM F&B. Buat 1) prediksi laba (P&L forecast), 2) prediksi permintaan (demand forecast), dan 3) estimasi progress bulanan dalam persentase (1-100) menggunakan data transaksi terbaru ini. Gunakan bahasa Indonesia santai namun profesional bagi penjual. \nData transaksi: ${JSON.stringify(transactions.map((t) => ({ total: t.total_amount, tipe: t.type, tgl: t.date, item: t.transaction_details?.map((d) => (d.products as any)?.name).join(', ') })))}`;
 
   try {
     const result = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: 'gemini-2.5-pro',
       contents: prompt,
       config: {
-        responseMimeType: "application/json",
+        responseMimeType: 'application/json',
         responseSchema: {
           type: Type.OBJECT,
           properties: {
@@ -49,7 +53,7 @@ export async function getDashboardInsights() {
             plForecastProgress: {
               type: Type.NUMBER,
               description:
-                "Angka 1-100 merepresentasikan progress target bulanan.",
+                'Angka 1-100 merepresentasikan progress target bulanan.',
             },
             demandForecastText: {
               type: Type.STRING,
@@ -58,22 +62,24 @@ export async function getDashboardInsights() {
             },
           },
           required: [
-            "plForecastText",
-            "plForecastProgress",
-            "demandForecastText",
+            'plForecastText',
+            'plForecastProgress',
+            'demandForecastText',
           ],
         },
       },
     });
 
-    if (!result.text) return null;
+    if (!result.text) {
+      return null;
+    }
     return JSON.parse(result.text) as {
       plForecastText: string;
       plForecastProgress: number;
       demandForecastText: string;
     };
   } catch (error) {
-    console.error("Failed to get dashboard insights:", error);
+    console.error('Failed to get dashboard insights:', error);
     return null;
   }
 }

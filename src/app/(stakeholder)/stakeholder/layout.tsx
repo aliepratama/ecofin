@@ -1,9 +1,10 @@
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { LogOut, Settings, LayoutDashboard } from "lucide-react";
-import { createClient } from "@/libs/supabase/server";
-import { Button } from "@/components/ui/button";
-import { signOutAction } from "@/app/(stakeholder)/analytics/actions";
+import { LogOut, Settings, LayoutDashboard } from 'lucide-react';
+import NextImage from 'next/image';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { signOutAction } from '@/app/(stakeholder)/analytics/actions';
+import { Button } from '@/components/ui/button';
+import { createClient } from '@/libs/supabase/server';
 
 export default async function StakeholderLayout({
   children,
@@ -14,7 +15,7 @@ export default async function StakeholderLayout({
   const { data } = await supabase.auth.getUser();
 
   if (!data.user) {
-    redirect("/login");
+    redirect('/login');
   }
 
   // Optional: Verify if user is actually a stakeholder role.
@@ -28,12 +29,16 @@ export default async function StakeholderLayout({
             href="/stakeholder/dashboard"
             className="flex items-center gap-2 font-semibold"
           >
-            <div className="size-8 rounded bg-primary text-primary-foreground flex items-center justify-center font-bold">
-              E
-            </div>
+            <NextImage
+              src="/logo.png"
+              alt="Ecofin Logo"
+              width={32}
+              height={32}
+              className="object-contain"
+            />
             <span className="hidden sm:inline-block">Ecofin Stakeholder</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-6 ml-6 text-sm font-medium">
+          <nav className="ml-6 hidden items-center gap-6 text-sm font-medium md:flex">
             <Link
               href="/stakeholder/dashboard"
               className="text-foreground transition-colors hover:text-foreground/80"
@@ -50,18 +55,18 @@ export default async function StakeholderLayout({
         </div>
         <div className="flex items-center gap-2">
           {/* Quick mobile nav links */}
-          <div className="flex md:hidden items-center gap-1 mr-2">
+          <div className="mr-2 flex items-center gap-1 md:hidden">
             <Link
               href="/stakeholder/dashboard"
               aria-label="Dashboard"
-              className="p-2 transition-colors hover:bg-muted rounded-md text-muted-foreground mr-1"
+              className="mr-1 rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted"
             >
               <LayoutDashboard className="size-5" />
             </Link>
             <Link
               href="/stakeholder/settings"
               aria-label="Pengaturan"
-              className="p-2 transition-colors hover:bg-muted rounded-md text-muted-foreground mr-1"
+              className="mr-1 rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted"
             >
               <Settings className="size-5" />
             </Link>

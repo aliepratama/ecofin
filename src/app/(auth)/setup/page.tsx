@@ -1,11 +1,11 @@
-import { redirect } from "next/navigation";
-import { Store } from "lucide-react";
-import { eq } from "drizzle-orm";
-import { db } from "@/libs/DB";
-import { stakeholders, businesses } from "@/models/Schema";
-import { Button } from "@/components/ui/button";
-import { createClient } from "@/libs/supabase/server";
-import { BusinessProfileForm } from "./BusinessProfileForm";
+import { eq } from 'drizzle-orm';
+import { Store } from 'lucide-react';
+import { redirect } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { db } from '@/libs/DB';
+import { createClient } from '@/libs/supabase/server';
+import { stakeholders, businesses } from '@/models/Schema';
+import { BusinessProfileForm } from './BusinessProfileForm';
 
 export default async function SetupPage() {
   const supabase = await createClient();
@@ -14,7 +14,7 @@ export default async function SetupPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login");
+    redirect('/login');
   }
 
   const activeStakeholder = await db.query.stakeholders.findFirst({
@@ -22,7 +22,7 @@ export default async function SetupPage() {
   });
 
   if (activeStakeholder) {
-    redirect("/stakeholder/dashboard");
+    redirect('/stakeholder/dashboard');
   }
 
   const existingBusiness = await db.query.businesses.findFirst({
@@ -55,10 +55,10 @@ export default async function SetupPage() {
 
         <form
           action={async () => {
-            "use server";
+            'use server';
             const supabase = await createClient();
             await supabase.auth.signOut();
-            redirect("/login");
+            redirect('/login');
           }}
         >
           <Button type="submit" variant="outline" className="h-12 w-full">
