@@ -20,6 +20,7 @@ export type ParsedReceiptData = {
   totalAmount: number;
   items: {
     name: string;
+    rawName?: string;
     quantity: number;
     price: number;
     unit?: string;
@@ -154,6 +155,7 @@ Ekstrak ke format JSON yang valid (tanpa markdown):
     parsed.items = [
       {
         name: "Item dari Nota OCR",
+        rawName: "Item dari Nota OCR",
         quantity: 1,
         price: parsed.totalAmount,
         subtotal: parsed.totalAmount,
@@ -163,6 +165,7 @@ Ekstrak ke format JSON yang valid (tanpa markdown):
   } else {
     parsed.items = parsed.items.map((it) => ({
       ...it,
+      rawName: it.name,
       quantity: Math.max(1, Math.round(it.quantity || 1)),
       unit: it.unit || "Pcs",
     }));

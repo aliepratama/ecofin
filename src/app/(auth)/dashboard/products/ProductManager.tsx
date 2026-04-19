@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Trash2,
@@ -8,25 +8,28 @@ import {
   Package,
   Utensils,
   ScanText,
-} from 'lucide-react';
-import { useState, useTransition, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
+import { useState, useTransition, useEffect } from "react";
+import { LineChart, Line, ResponsiveContainer, YAxis } from "recharts";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   addProduct,
   deleteProduct,
   scanMenuFromImageAction,
   bulkAddProducts,
-} from './actions';
-import { generateRecipeWithAI } from './ai-actions';
+} from "./actions";
+import { generateRecipeWithAI } from "./ai-actions";
 
 type ProductType = {
   id: string;
@@ -39,20 +42,29 @@ type ProductType = {
 
 export function ProductManager({
   initialProducts,
+  priceHistoryData = {},
 }: {
   initialProducts: ProductType[];
+  priceHistoryData?: Record<
+    string,
+    {
+      timeline: { date: string; price: number }[];
+      typos: string[];
+      delta: number;
+    }
+  >;
 }) {
   const [products, setProducts] = useState(initialProducts);
-  const [activeTab, setActiveTab] = useState<'menu' | 'bahan_baku'>('menu');
+  const [activeTab, setActiveTab] = useState<"menu" | "bahan_baku">("menu");
   const [isLoading, startTransition] = useTransition();
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
-    name: '',
-    price: '',
-    currentStock: '',
-    unit: '',
+    name: "",
+    price: "",
+    currentStock: "",
+    unit: "",
   });
 
   // AI Recipe State (for current menu)
@@ -63,15 +75,15 @@ export function ProductManager({
   const [scannedMenus, setScannedMenus] = useState<any[] | null>(null);
   const [isBulkAdding, setIsBulkAdding] = useState(false);
 
-  const menus = products.filter((p) => !p.name.includes('[Bahan Baku]'));
-  const bahanBaku = products.filter((p) => p.name.includes('[Bahan Baku]'));
+  const menus = products.filter((p) => !p.name.includes("[Bahan Baku]"));
+  const bahanBaku = products.filter((p) => p.name.includes("[Bahan Baku]"));
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   useEffect(() => {
-    if (activeTab !== 'menu' || !formData.name || formData.name.length < 3) {
+    if (activeTab !== "menu" || !formData.name || formData.name.length < 3) {
       return;
     }
 
@@ -79,11 +91,11 @@ export function ProductManager({
       setIsGenerating(true);
       try {
         const bahanBakuNames = bahanBaku.map((b) =>
-          b.name.replace('[Bahan Baku] ', '')
+          b.name.replace("[Bahan Baku] ", ""),
         );
         const generated = await generateRecipeWithAI(
           formData.name,
-          bahanBakuNames
+          bahanBakuNames,
         );
         if (generated?.ingredients) {
           setRecipe(generated.ingredients);
@@ -103,8 +115,8 @@ export function ProductManager({
   const handleAddIngredientToBahanBaku = async (ing: any) => {
     const isExists = bahanBaku.find(
       (b) =>
-        b.name.replace('[Bahan Baku] ', '').toLowerCase() ===
-        (ing.name ?? ing.ingredient).toLowerCase()
+        b.name.replace("[Bahan Baku] ", "").toLowerCase() ===
+        (ing.name ?? ing.ingredient).toLowerCase(),
     );
     if (isExists) {
       alert(`${ing.name ?? ing.ingredient} sudah ada di daftar bahan baku!`);
@@ -113,11 +125,11 @@ export function ProductManager({
 
     startTransition(async () => {
       const form = new FormData();
-      form.append('name', ing.name ?? ing.ingredient);
-      form.append('price', '0');
-      form.append('currentStock', '0');
-      form.append('unit', ing.unit ?? 'Gram');
-      form.append('isRawMaterial', 'true');
+      form.append("name", ing.name ?? ing.ingredient);
+      form.append("price", "0");
+      form.append("currentStock", "0");
+      form.append("unit", ing.unit ?? "Gram");
+      form.append("isRawMaterial", "true");
 
       const result = await addProduct(form);
       if (result?.error) {
@@ -128,14 +140,14 @@ export function ProductManager({
       const newProduct: ProductType = {
         id: Date.now().toString(),
         name: `[Bahan Baku] ${ing.name ?? ing.ingredient}`,
-        price: '0',
+        price: "0",
         currentStock: 0,
-        unit: ing.unit ?? 'Gram',
+        unit: ing.unit ?? "Gram",
         aiRecipe: null,
       };
       setProducts([newProduct, ...products]);
       alert(
-        `${ing.name ?? ing.ingredient} berhasil ditambahkan ke daftar Bahan Baku!`
+        `${ing.name ?? ing.ingredient} berhasil ditambahkan ke daftar Bahan Baku!`,
       );
     });
   };
@@ -152,12 +164,12 @@ export function ProductManager({
     e.preventDefault();
     startTransition(async () => {
       const form = new FormData(e.currentTarget);
-      if (activeTab === 'bahan_baku') {
-        form.append('isRawMaterial', 'true');
+      if (activeTab === "bahan_baku") {
+        form.append("isRawMaterial", "true");
       }
       // AI Recipe
       if (recipe) {
-        form.append('aiRecipe', JSON.stringify(recipe));
+        form.append("aiRecipe", JSON.stringify(recipe));
       }
 
       const result = await addProduct(form);
@@ -168,7 +180,7 @@ export function ProductManager({
 
       // Reload is simpler to get actual IDs, but Optimistic:
       const finalName =
-        activeTab === 'bahan_baku'
+        activeTab === "bahan_baku"
           ? `[Bahan Baku] ${formData.name}`
           : formData.name;
       const newProduct: ProductType = {
@@ -177,20 +189,20 @@ export function ProductManager({
         price: formData.price,
         currentStock: Number(formData.currentStock) || 0,
         unit:
-          formData.unit || (activeTab === 'bahan_baku' ? 'Kg/Liter' : 'Porsi'),
-        aiRecipe: activeTab === 'menu' ? recipe : null,
+          formData.unit || (activeTab === "bahan_baku" ? "Kg/Liter" : "Porsi"),
+        aiRecipe: activeTab === "menu" ? recipe : null,
       };
 
       setProducts([...products, newProduct]);
 
-      setFormData({ name: '', price: '', currentStock: '', unit: '' });
+      setFormData({ name: "", price: "", currentStock: "", unit: "" });
       setRecipe(null);
       e.currentTarget.reset();
     });
   };
 
   async function handleDelete(id: string) {
-    if (!confirm('Hapus item ini?')) {
+    if (!confirm("Hapus item ini?")) {
       return;
     }
     setProducts(products.filter((p) => p.id !== id));
@@ -206,7 +218,7 @@ export function ProductManager({
     setIsScanning(true);
     try {
       const fd = new FormData();
-      fd.append('image', file);
+      fd.append("image", file);
       const res = await scanMenuFromImageAction(fd);
 
       if (res.error) {
@@ -217,10 +229,10 @@ export function ProductManager({
       }
     } catch (error) {
       console.error(error);
-      alert('Gagal scan gambar.');
+      alert("Gagal scan gambar.");
     } finally {
       setIsScanning(false);
-      e.target.value = ''; // reset
+      e.target.value = ""; // reset
     }
   }
 
@@ -235,7 +247,7 @@ export function ProductManager({
       if (res.error) {
         alert(res.error);
       } else {
-        alert('Berhasil menambahkan banyak menu!');
+        alert("Berhasil menambahkan banyak menu!");
         setScannedMenus(null);
         // hard refresh or optimistic update?
         // Let's do a hard window reload for absolute consistency after a bulk update since we don't have accurate IDs
@@ -243,7 +255,7 @@ export function ProductManager({
       }
     } catch (error) {
       console.error(error);
-      alert('Terjadi kesalahan.');
+      alert("Terjadi kesalahan.");
     } finally {
       setIsBulkAdding(false);
     }
@@ -315,7 +327,7 @@ export function ProductManager({
                 onClick={() => {
                   setScannedMenus([
                     ...scannedMenus,
-                    { name: 'Menu Baru', price: 0 },
+                    { name: "Menu Baru", price: 0 },
                   ]);
                 }}
               >
@@ -339,7 +351,7 @@ export function ProductManager({
                 disabled={isBulkAdding || scannedMenus.length === 0}
               >
                 {isBulkAdding
-                  ? 'Menyimpan...'
+                  ? "Menyimpan..."
                   : `Simpan ${scannedMenus.length} Menu`}
               </Button>
             </div>
@@ -351,14 +363,14 @@ export function ProductManager({
       <div className="flex w-full max-w-md rounded-lg bg-muted p-1">
         <button
           onClick={() => {
-            setActiveTab('menu');
+            setActiveTab("menu");
             setRecipe(null);
-            setFormData({ name: '', price: '', currentStock: '', unit: '' });
+            setFormData({ name: "", price: "", currentStock: "", unit: "" });
           }}
           className={`flex flex-1 items-center justify-center gap-2 rounded-md py-2 text-sm font-medium transition-all ${
-            activeTab === 'menu'
-              ? 'bg-background text-primary shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+            activeTab === "menu"
+              ? "bg-background text-primary shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <Utensils className="h-4 w-4" />
@@ -366,14 +378,14 @@ export function ProductManager({
         </button>
         <button
           onClick={() => {
-            setActiveTab('bahan_baku');
+            setActiveTab("bahan_baku");
             setRecipe(null);
-            setFormData({ name: '', price: '', currentStock: '', unit: '' });
+            setFormData({ name: "", price: "", currentStock: "", unit: "" });
           }}
           className={`flex flex-1 items-center justify-center gap-2 rounded-md py-2 text-sm font-medium transition-all ${
-            activeTab === 'bahan_baku'
-              ? 'bg-background text-primary shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+            activeTab === "bahan_baku"
+              ? "bg-background text-primary shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <Package className="h-4 w-4" />
@@ -383,7 +395,7 @@ export function ProductManager({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="space-y-4 lg:col-span-5">
-          {activeTab === 'menu' && (
+          {activeTab === "menu" && (
             <Card className="border border-primary/20 bg-primary/5">
               <div className="flex items-center justify-between p-4">
                 <div>
@@ -399,7 +411,7 @@ export function ProductManager({
                   className="inline-flex h-9 cursor-pointer items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium whitespace-nowrap text-primary-foreground hover:bg-primary/90"
                 >
                   {isScanning ? (
-                    'Scanning...'
+                    "Scanning..."
                   ) : (
                     <>
                       <ScanText className="mr-2 h-4 w-4" />
@@ -422,29 +434,29 @@ export function ProductManager({
           <Card>
             <CardHeader className="bg-card">
               <CardTitle>
-                {activeTab === 'menu'
-                  ? 'Tambah Menu Jualan Otomatis (AI)'
-                  : 'Tambah Bahan Baku Manual'}
+                {activeTab === "menu"
+                  ? "Tambah Menu Jualan Otomatis (AI)"
+                  : "Tambah Bahan Baku Manual"}
               </CardTitle>
               <CardDescription>
-                {activeTab === 'menu'
-                  ? 'Ketik nama menu, lalu biarkan AI membuatkan daftar bahan bakunya.'
-                  : 'Catat bahan mentah sebagai acuan resep dan pencatatan pengeluaran.'}
+                {activeTab === "menu"
+                  ? "Ketik nama menu, lalu biarkan AI membuatkan daftar bahan bakunya."
+                  : "Catat bahan mentah sebagai acuan resep dan pencatatan pengeluaran."}
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label>
-                    Nama {activeTab === 'menu' ? 'Menu' : 'Bahan Baku'}
+                    Nama {activeTab === "menu" ? "Menu" : "Bahan Baku"}
                   </Label>
                   <div className="flex gap-2">
                     <Input
                       name="name"
                       placeholder={
-                        activeTab === 'menu'
-                          ? 'Contoh: Nasi Goreng Spesial'
-                          : 'Contoh: Beras Premium'
+                        activeTab === "menu"
+                          ? "Contoh: Nasi Goreng Spesial"
+                          : "Contoh: Beras Premium"
                       }
                       required
                       value={formData.name}
@@ -453,14 +465,14 @@ export function ProductManager({
                   </div>
                 </div>
 
-                {activeTab === 'menu' && isGenerating && (
+                {activeTab === "menu" && isGenerating && (
                   <div className="flex animate-pulse items-center justify-center rounded-md border border-primary/20 bg-primary/5 p-2 text-sm text-primary">
                     <Wand2 className="mr-2 h-4 w-4" />
                     Memprediksi Resep (AI)...
                   </div>
                 )}
 
-                {activeTab === 'menu' ? (
+                {activeTab === "menu" ? (
                   <div className="space-y-2">
                     <Label>Harga Jual</Label>
                     <Input
@@ -479,11 +491,11 @@ export function ProductManager({
 
                 <div className="space-y-2">
                   <Label>Unit / Satuan Acuan</Label>
-                  {activeTab === 'menu' ? (
+                  {activeTab === "menu" ? (
                     <select
                       name="unit"
                       className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                      value={formData.unit || 'Porsi'}
+                      value={formData.unit || "Porsi"}
                       onChange={(e) => {
                         setFormData({ ...formData, unit: e.target.value });
                       }}
@@ -495,7 +507,7 @@ export function ProductManager({
                     <select
                       name="unit"
                       className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                      value={formData.unit || 'Gram'}
+                      value={formData.unit || "Gram"}
                       onChange={(e) => {
                         setFormData({ ...formData, unit: e.target.value });
                       }}
@@ -512,7 +524,7 @@ export function ProductManager({
                 </div>
 
                 {/* AI Recipe Section */}
-                {activeTab === 'menu' && recipe && (
+                {activeTab === "menu" && recipe && (
                   <div className="mt-4 space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
                     <div className="flex items-center justify-between">
                       <h4 className="flex items-center text-sm font-semibold text-primary">
@@ -530,8 +542,8 @@ export function ProductManager({
                         const isNew = !bahanBaku.some(
                           (b) =>
                             b.name
-                              .replace('[Bahan Baku] ', '')
-                              .toLowerCase() === ingredientName.toLowerCase()
+                              .replace("[Bahan Baku] ", "")
+                              .toLowerCase() === ingredientName.toLowerCase(),
                         );
 
                         return (
@@ -587,11 +599,11 @@ export function ProductManager({
 
                 <Button type="submit" disabled={isLoading} className="w-full">
                   {isLoading ? (
-                    'Menyimpan...'
+                    "Menyimpan..."
                   ) : (
                     <>
                       <Plus className="mr-2 h-4 w-4" />
-                      Simpan {activeTab === 'menu' ? 'Menu' : 'Bahan Baku'}
+                      Simpan {activeTab === "menu" ? "Menu" : "Bahan Baku"}
                     </>
                   )}
                 </Button>
@@ -604,7 +616,7 @@ export function ProductManager({
           <div className="h-full w-full rounded-xl border border-border bg-card shadow-sm">
             <div className="border-b border-border p-6">
               <h3 className="text-xl font-bold">
-                Daftar {activeTab === 'menu' ? 'Menu Jualan' : 'Bahan Baku'}
+                Daftar {activeTab === "menu" ? "Menu Jualan" : "Bahan Baku"}
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Semua item aktif di inventaris Anda.
@@ -612,42 +624,112 @@ export function ProductManager({
             </div>
 
             <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2">
-              {(activeTab === 'menu' ? menus : bahanBaku).length === 0 ? (
+              {(activeTab === "menu" ? menus : bahanBaku).length === 0 ? (
                 <div className="col-span-full rounded-lg border-2 border-dashed border-border bg-muted/30 py-12 text-center text-muted-foreground">
                   <Package className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
                   <p>
-                    Belum ada {activeTab === 'menu' ? 'menu' : 'bahan baku'}.
+                    Belum ada {activeTab === "menu" ? "menu" : "bahan baku"}.
                   </p>
                   <p className="mt-1 text-sm">
                     Silakan tambahkan di sebelah kiri.
                   </p>
                 </div>
               ) : (
-                (activeTab === 'menu' ? menus : bahanBaku).map((p) => (
+                (activeTab === "menu" ? menus : bahanBaku).map((p) => (
                   <div
                     key={p.id}
                     className="flex items-start justify-between rounded-xl border border-border bg-background p-4 shadow-sm transition-colors hover:border-primary/40"
                   >
                     <div>
                       <p className="text-lg leading-tight font-bold">
-                        {p.name.replace('[Bahan Baku] ', '')}
+                        {p.name.replace("[Bahan Baku] ", "")}
                       </p>
-                      {activeTab === 'menu' && (
+                      {activeTab === "menu" && (
                         <p className="mt-1 text-sm text-foreground/80">
-                          {new Intl.NumberFormat('id-ID', {
-                            style: 'currency',
-                            currency: 'IDR',
+                          {new Intl.NumberFormat("id-ID", {
+                            style: "currency",
+                            currency: "IDR",
                           }).format(Number.parseFloat(p.price) || 0)}
                         </p>
                       )}
                       <div className="mt-3 flex gap-2">
                         <span className="inline-flex items-center rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                          Satuan Acuan:{' '}
+                          Satuan Acuan:{" "}
                           {p.unit ??
-                            (activeTab === 'bahan_baku' ? 'Kg' : 'Porsi')}
+                            (activeTab === "bahan_baku" ? "Kg" : "Porsi")}
                         </span>
-                      </div>
-                      {activeTab === 'menu' &&
+                      </div>{" "}
+                      {activeTab === "bahan_baku" &&
+                        priceHistoryData[p.id] &&
+                        (() => {
+                          const hist = priceHistoryData[p.id]!;
+                          return (
+                            <div className="mt-4 pt-4 border-t border-border/50">
+                              <p className="mb-2 text-xs font-semibold text-muted-foreground flex justify-between items-center">
+                                History Harga (per satuan)
+                                {hist.delta !== 0 && (
+                                  <span
+                                    className={`flex items-center gap-1 ${hist.delta > 0 ? "text-destructive" : "text-green-600"}`}
+                                  >
+                                    {hist.delta > 0 ? (
+                                      <TrendingUp className="h-3 w-3" />
+                                    ) : (
+                                      <TrendingDown className="h-3 w-3" />
+                                    )}
+                                    {new Intl.NumberFormat("id-ID", {
+                                      style: "currency",
+                                      currency: "IDR",
+                                    }).format(Math.abs(hist.delta))}
+                                  </span>
+                                )}
+                              </p>
+                              <div className="h-[60px] w-full mt-1">
+                                {hist.timeline.length > 1 ? (
+                                  <ResponsiveContainer
+                                    width="100%"
+                                    height="100%"
+                                  >
+                                    <LineChart data={hist.timeline}>
+                                      <YAxis domain={["auto", "auto"]} hide />
+                                      <Line
+                                        type="monotone"
+                                        dataKey="price"
+                                        stroke={
+                                          hist.delta > 0 ? "#ef4444" : "#16a34a"
+                                        }
+                                        strokeWidth={2}
+                                        dot={{ r: 2 }}
+                                        isAnimationActive={false}
+                                      />
+                                    </LineChart>
+                                  </ResponsiveContainer>
+                                ) : (
+                                  <p className="text-[10px] text-muted-foreground italic h-full flex items-center">
+                                    Data history belum cukup untuk grafik.
+                                  </p>
+                                )}
+                              </div>
+                              {hist.typos.length > 0 && (
+                                <div className="mt-3">
+                                  <p className="text-[10px] font-semibold text-muted-foreground mb-1">
+                                    Dikenali juga sebagai OCR (Aliasses):
+                                  </p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {hist.typos.map((typo, idx) => (
+                                      <span
+                                        key={idx}
+                                        className="bg-muted px-1.5 py-0.5 rounded text-[10px] text-muted-foreground border border-border"
+                                      >
+                                        {typo}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}{" "}
+                      {activeTab === "menu" &&
                         Array.isArray(p.aiRecipe) &&
                         p.aiRecipe.length > 0 && (
                           <div className="mt-3 text-xs text-muted-foreground">
@@ -657,13 +739,13 @@ export function ProductManager({
                             <ul className="list-disc space-y-1 pl-4">
                               {p.aiRecipe.map((ing: any, i: number) => (
                                 <li key={i}>
-                                  {ing.name ?? ing.ingredient} ({ing.amount}{' '}
+                                  {ing.name ?? ing.ingredient} ({ing.amount}{" "}
                                   {ing.unit})
                                 </li>
                               ))}
                             </ul>
                           </div>
-                        )}{' '}
+                        )}{" "}
                     </div>
                     <div className="flex flex-col items-end gap-2 text-right">
                       <button

@@ -97,9 +97,19 @@ export default function ScanReceiptPage() {
       const context = canvas.getContext("2d");
 
       if (context && video.videoWidth && video.videoHeight) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const MAX_DIM = 1200;
+        let targetW = video.videoWidth;
+        let targetH = video.videoHeight;
+
+        if (targetW > MAX_DIM || targetH > MAX_DIM) {
+          const ratio = Math.min(MAX_DIM / targetW, MAX_DIM / targetH);
+          targetW = targetW * ratio;
+          targetH = targetH * ratio;
+        }
+
+        canvas.width = targetW;
+        canvas.height = targetH;
+        context.drawImage(video, 0, 0, targetW, targetH);
 
         canvas.toBlob(
           (blob) => {
@@ -110,7 +120,7 @@ export default function ScanReceiptPage() {
             }
           },
           "image/jpeg",
-          0.9,
+          0.7,
         );
       }
     }
@@ -119,6 +129,11 @@ export default function ScanReceiptPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setErrorMessage("Ukuran gambar terlalu besar. Maksimal 5MB untuk OCR.");
+      } else {
+        setErrorMessage(null);
+      }
       const url = URL.createObjectURL(file);
       setPreview(url);
       setCapturedBlob(file);
