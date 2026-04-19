@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useActionState } from 'react';
-import { getCurrentLocation } from '@/utils/Geolocation';
+import { useEffect, useState, useActionState } from "react";
+import { getCurrentLocation } from "@/utils/Geolocation";
 
 export function ManualTransactionForm(
   props: Readonly<{
     action: (prevState: any, formData: FormData) => Promise<any>;
-  }>
+  }>,
 ) {
   const [state, formAction] = useActionState(props.action, { error: null });
   const [loc, setLoc] = useState<{ lat: number | null; lng: number | null }>({
@@ -84,12 +84,12 @@ export function ManualTransactionForm(
 
       <p className="rounded-xl bg-muted px-3 py-2 text-sm text-muted-foreground">
         {loc.lat && loc.lng
-          ? 'Lokasi tercatat otomatis untuk validasi data usaha.'
-          : 'Lokasi belum tersedia. Transaksi tetap bisa disimpan.'}
+          ? "Lokasi tercatat otomatis untuk validasi data usaha."
+          : "Lokasi belum tersedia. Transaksi tetap bisa disimpan."}
       </p>
 
-      <input type="hidden" name="latitude" value={loc.lat?.toString() ?? ''} />
-      <input type="hidden" name="longitude" value={loc.lng?.toString() ?? ''} />
+      <input type="hidden" name="latitude" value={loc.lat?.toString() ?? ""} />
+      <input type="hidden" name="longitude" value={loc.lng?.toString() ?? ""} />
 
       <SubmitButton />
     </form>

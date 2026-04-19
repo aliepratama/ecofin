@@ -1,15 +1,15 @@
-import path from 'node:path';
-import { VertexAI } from '@google-cloud/vertexai';
-import type { Schema } from '@google-cloud/vertexai';
-import { Env } from '../Env';
+import path from "node:path";
+import { VertexAI } from "@google-cloud/vertexai";
+import type { Schema } from "@google-cloud/vertexai";
+import { Env } from "../Env";
 
-const isDev = Env.NODE_ENV === 'development' || !Env.NODE_ENV;
+const isDev = Env.NODE_ENV === "development" || !Env.NODE_ENV;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let authOptions: any = {};
 
 if (isDev) {
   authOptions = {
-    keyFilename: path.join(process.cwd(), 'gcp-service-account.json'),
+    keyFilename: path.join(process.cwd(), "gcp-service-account.json"),
   };
 } else if (Env.GCP_SERVICE_ACCOUNT_JSON) {
   // Parsing the JSON string from the environment variable
@@ -24,8 +24,8 @@ const vertexAI = new VertexAI({
   googleAuthOptions: authOptions,
 });
 
-const generativeModel = vertexAI.getGenerativeModel({
-  model: 'gemini-1.5-pro-preview-0409',
+export const generativeModel = vertexAI.getGenerativeModel({
+  model: "gemini-1.5-pro-preview-0409",
 });
 
 export type ChatItem = {
@@ -37,44 +37,44 @@ export type ChatItem = {
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
 const transactionSchema = {
-  type: 'OBJECT',
+  type: "OBJECT",
   properties: {
-    type: { type: 'STRING', enum: ['INCOME', 'EXPENSE'] },
-    amount: { type: 'NUMBER' },
-    description: { type: 'STRING' },
+    type: { type: "STRING", enum: ["INCOME", "EXPENSE"] },
+    amount: { type: "NUMBER" },
+    description: { type: "STRING" },
     items: {
-      type: 'ARRAY',
+      type: "ARRAY",
       items: {
-        type: 'OBJECT',
+        type: "OBJECT",
         properties: {
-          itemName: { type: 'STRING' },
-          price: { type: 'NUMBER' },
-          quantity: { type: 'NUMBER' },
-          unit: { type: 'STRING' },
+          itemName: { type: "STRING" },
+          price: { type: "NUMBER" },
+          quantity: { type: "NUMBER" },
+          unit: { type: "STRING" },
         },
-        required: ['itemName', 'quantity'],
+        required: ["itemName", "quantity"],
       },
     },
   },
-  required: ['type', 'amount', 'description'],
+  required: ["type", "amount", "description"],
 } as unknown as Schema;
 
 export type AIChatResponse = {
-  type: 'INCOME' | 'EXPENSE';
+  type: "INCOME" | "EXPENSE";
   amount: number;
   description: string;
   items?: ChatItem[];
 };
 
 export async function parseTransactionFromText(
-  text: string
+  text: string,
 ): Promise<AIChatResponse | null> {
   try {
     const prompt = `Anda adalah asisten keuangan AI untuk UMKM F&B. Ubah teks input menuju format JSON sesuai schema. Input: ${text}`;
     const result = await generativeModel.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
       generationConfig: {
-        responseMimeType: 'application/json',
+        responseMimeType: "application/json",
         responseSchema: transactionSchema,
       },
     });
@@ -94,28 +94,28 @@ export type ParsedMenu = { name: string; price: number };
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
 const menuListSchema = {
-  type: 'ARRAY',
+  type: "ARRAY",
   items: {
-    type: 'OBJECT',
+    type: "OBJECT",
     properties: {
-      name: { type: 'STRING' },
-      price: { type: 'NUMBER' },
+      name: { type: "STRING" },
+      price: { type: "NUMBER" },
     },
-    required: ['name', 'price'],
+    required: ["name", "price"],
   },
 } as unknown as Schema;
 
 export async function parseMenusFromImage(
   base64Image: string,
-  mimeType: string
+  mimeType: string,
 ): Promise<ParsedMenu[] | null> {
   try {
-    const p = 'Ekstrak daftar menu dan harga dari gambar ini.';
+    const p = "Ekstrak daftar menu dan harga dari gambar ini.";
     const img = { inlineData: { data: base64Image, mimeType } };
     const result = await generativeModel.generateContent({
-      contents: [{ role: 'user', parts: [{ text: p }, img] }],
+      contents: [{ role: "user", parts: [{ text: p }, img] }],
       generationConfig: {
-        responseMimeType: 'application/json',
+        responseMimeType: "application/json",
         responseSchema: menuListSchema,
       },
     });

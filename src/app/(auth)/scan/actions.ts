@@ -1,6 +1,7 @@
 'use server';
 
-import { GoogleGenAI, Type } from '@google/genai';
+import type { Schema } from '@google-cloud/vertexai';
+import { generativeModel } from '@/libs/ai/gemini-service';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -43,8 +44,6 @@ export async function processReceiptAction(formData: FormData) {
   const buffer = Buffer.from(bytes);
   const base64Image = buffer.toString('base64');
 
-  const ai = new GoogleGenAI({});
-
   const prompt = `Anda adalah asisten akuntan. Saya memberikan gambar struk/nota.
 Tolong ekstrak informasi dari gambar nota/struk ini ke dalam format JSON yang valid (tanpa markdown):
 {
@@ -60,44 +59,51 @@ Tolong ekstrak informasi dari gambar nota/struk ini ke dalam format JSON yang va
   ]
 }`;
 
-  const result = await ai.models.generateContent({
-    model: 'gemini-2.5-pro',
-    contents: [
-      prompt,
-      {
-        inlineData: {
-          data: base64Image,
-          mimeType: file.type || 'image/jpeg',
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+  const scanSchema = {
+    type: 'OBJECT',
+    properties: {
+      type: { type: 'STRING', enum: ['EXPENSE', 'INCOME'] },
+      totalAmount: { type: 'NUMBER' },
+      items: {
+        type: 'ARRAY',
+        items: {
+          type: 'OBJECT',
+          properties: {
+            name: { type: 'STRING' },
+            quantity: { type: 'NUMBER' },
+            price: { type: 'NUMBER' },
+            subtotal: { type: 'NUMBER' },
+          },
+          required: ['name', 'quantity', 'price', 'subtotal'],
         },
       },
-    ],
-    config: {
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          type: { type: Type.STRING, enum: ['EXPENSE', 'INCOME'] },
-          totalAmount: { type: Type.NUMBER },
-          items: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                name: { type: Type.STRING },
-                quantity: { type: Type.NUMBER },
-                price: { type: Type.NUMBER },
-                subtotal: { type: Type.NUMBER },
-              },
-              required: ['name', 'quantity', 'price', 'subtotal'],
+    },
+    required: ['type', 'totalAmount', 'items'],
+  } as unknown as Schema;
+
+  const result = await generativeModel.generateContent({
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          { text: prompt },
+          {
+            inlineData: {
+              data: base64Image,
+              mimeType: file.type || 'image/jpeg',
             },
           },
-        },
-        required: ['type', 'totalAmount', 'items'],
+        ],
       },
+    ],
+    generationConfig: {
+      responseMimeType: 'application/json',
+      responseSchema: scanSchema,
     },
   });
 
-  const { text } = result;
+  const text = result.response.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) {
     throw new Error('Tidak ada respon dari AI');
   }
