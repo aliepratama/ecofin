@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { Camera, ImagePlus, RefreshCw } from "lucide-react";
-import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
-import { getCurrentLocation } from "@/utils/Geolocation";
-import { processReceiptAction } from "./actions";
+import { Camera, ImagePlus, RefreshCw } from 'lucide-react';
+import Image from 'next/image';
+import { useState, useEffect, useRef } from 'react';
+import { getCurrentLocation } from '@/utils/Geolocation';
+import { processReceiptAction } from './actions';
 
 export default function ScanReceiptPage() {
   const [isScanning, setIsScanning] = useState(false);
@@ -40,7 +40,7 @@ export default function ScanReceiptPage() {
     setCameraError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
+        video: { facingMode: 'environment' },
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -50,9 +50,9 @@ export default function ScanReceiptPage() {
       setPreview(null);
       setCapturedBlob(null);
     } catch (error) {
-      console.error("Camera error:", error);
+      console.error('Camera error:', error);
       setCameraActive(false);
-      setCameraError("Gagal mengakses kamera. Silakan gunakan opsi upload.");
+      setCameraError('Gagal mengakses kamera. Silakan gunakan opsi upload.');
     }
   };
 
@@ -71,7 +71,7 @@ export default function ScanReceiptPage() {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      const context = canvas.getContext("2d");
+      const context = canvas.getContext('2d');
 
       if (context && video.videoWidth && video.videoHeight) {
         canvas.width = video.videoWidth;
@@ -86,8 +86,8 @@ export default function ScanReceiptPage() {
               stopCamera();
             }
           },
-          "image/jpeg",
-          0.9,
+          'image/jpeg',
+          0.9
         );
       }
     }
@@ -106,7 +106,7 @@ export default function ScanReceiptPage() {
   const retakePhoto = (e: React.MouseEvent) => {
     e.preventDefault();
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = '';
     }
     setPreview(null);
     setCapturedBlob(null);
@@ -165,20 +165,20 @@ export default function ScanReceiptPage() {
             setErrorMessage(null);
             try {
               if (loc.lat) {
-                formData.append("latitude", loc.lat.toString());
+                formData.append('latitude', loc.lat.toString());
               }
               if (loc.lng) {
-                formData.append("longitude", loc.lng.toString());
+                formData.append('longitude', loc.lng.toString());
               }
               if (capturedBlob) {
-                formData.set("receipt", capturedBlob, "receipt-capture.jpg");
+                formData.set('receipt', capturedBlob, 'receipt-capture.jpg');
               }
               await processReceiptAction(formData);
             } catch (error) {
               setErrorMessage(
                 error instanceof Error
                   ? error.message
-                  : "Terjadi kendala saat membaca nota.",
+                  : 'Terjadi kendala saat membaca nota.'
               );
             } finally {
               setIsScanning(false);
@@ -221,7 +221,7 @@ export default function ScanReceiptPage() {
 
               {/* Camera Viewfinder */}
               <div
-                className={`relative flex w-full flex-col items-center ${preview ? "hidden" : "block"}`}
+                className={`relative flex w-full flex-col items-center ${preview ? 'hidden' : 'block'}`}
               >
                 <video
                   ref={videoRef}
@@ -271,8 +271,8 @@ export default function ScanReceiptPage() {
 
           <p className="rounded-xl bg-muted px-3 py-2 text-sm text-muted-foreground">
             {loc.lat && loc.lng
-              ? "Lokasi tercatat otomatis untuk menambah kepercayaan data."
-              : "Lokasi belum tersedia. Anda tetap bisa melanjutkan scan."}
+              ? 'Lokasi tercatat otomatis untuk menambah kepercayaan data.'
+              : 'Lokasi belum tersedia. Anda tetap bisa melanjutkan scan.'}
           </p>
 
           <button
@@ -305,7 +305,7 @@ export default function ScanReceiptPage() {
                 AI Sedang Membaca...
               </>
             ) : (
-              "Simpan hasil scan"
+              'Simpan hasil scan'
             )}
           </button>
         </form>

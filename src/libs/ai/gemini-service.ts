@@ -1,179 +1,115 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import type { Schema } from "@google/genai";
-import { Env } from "../Env";
+import { VertexAI } from '@google-cloud/vertexai';
+import type { Schema } from '@google-cloud/vertexai';
+import { Env } from '../Env';
 
-const getAuthOptions = () => {
-  // Jika di Vercel (menggunakan string JSON dari env)
-  if (Env.GCP_SERVICE_ACCOUNT_JSON) {
-    const credentials = JSON.parse(Env.GCP_SERVICE_ACCOUNT_JSON);
-    return {
-      vertexai: true,
-      project: Env.VERTEX_PROJECT_ID,
-      location: Env.VERTEX_LOCATION,
-      googleAuthOptions: { credentials },
-    };
-  }
+const vertexAI = new VertexAI({
+  project: Env.VERTEX_PROJECT_ID,
+  location: Env.VERTEX_LOCATION,
+});
 
-  // Jika di Local (menggunakan path fail)
-  return {
-    vertexai: true,
-    project: Env.VERTEX_PROJECT_ID,
-    location: Env.VERTEX_LOCATION,
-  };
+const generativeModel = vertexAI.getGenerativeModel({
+  model: 'gemini-1.5-pro-preview-0409',
+});
+
+export type ChatItem = {
+  itemName: string;
+  price?: number;
+  quantity: number;
+  unit?: string;
 };
 
-// Initialize the Google Gen AI client via Vertex AI
-const ai = new GoogleGenAI(getAuthOptions());
-
-// Define the schema for structured JSON output
-const transactionSchema: Schema = {
-  type: Type.OBJECT,
+// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+const transactionSchema = {
+  type: 'OBJECT',
   properties: {
-    type: {
-      type: Type.STRING,
-      description:
-        "Tipe transaksi: 'INCOME' (pemasukan/penjualan) atau 'EXPENSE' (pengeluaran/belanja)",
-      enum: ["INCOME", "EXPENSE"],
-    },
-    amount: {
-      type: Type.NUMBER,
-      description:
-        "Nominal uang transaksi dalam angka mutlak (tanpa titik/koma/Rp). Misal: 15000",
-    },
-    description: {
-      type: Type.STRING,
-      description:
-        "Ringkasan teks transaksi/nama barang yang dibeli atau dijual. Singkat dan jelas. Misal: Beli Telur 2kg",
-    },
+    type: { type: 'STRING', enum: ['INCOME', 'EXPENSE'] },
+    amount: { type: 'NUMBER' },
+    description: { type: 'STRING' },
     items: {
-      type: Type.ARRAY,
-      description:
-        "Daftar barang jika ada beberapa item. Jika tidak jelas, biarkan array kosong.",
+      type: 'ARRAY',
       items: {
-        type: Type.OBJECT,
+        type: 'OBJECT',
         properties: {
-          itemName: { type: Type.STRING },
-          quantity: { type: Type.NUMBER },
-          price: {
-            type: Type.NUMBER,
-            description:
-              "Harga satuan untuk barang ini. Hitung berdasarkan total jika tidak disebutkan langsung.",
-          },
-          unit: {
-            type: Type.STRING,
-            description: "Satuan (misal: kg, pcs, liter)",
-          },
+          itemName: { type: 'STRING' },
+          price: { type: 'NUMBER' },
+          quantity: { type: 'NUMBER' },
+          unit: { type: 'STRING' },
         },
-        required: ["itemName", "quantity", "price"],
+        required: ['itemName', 'quantity'],
       },
     },
   },
-  required: ["type", "amount", "description"],
-};
+  required: ['type', 'amount', 'description'],
+} as unknown as Schema;
 
 export type AIChatResponse = {
-  type: "INCOME" | "EXPENSE";
+  type: 'INCOME' | 'EXPENSE';
   amount: number;
   description: string;
-  items?: {
-    itemName: string;
-    quantity: number;
-    price: number;
-    unit?: string;
-  }[];
+  items?: ChatItem[];
 };
 
-/**
- * Memproses teks input natural menjadi format transaksi terstruktur.
- * @param text input teks bebas dari pengguna
- * @returns objek JSON transaksi
- */
 export async function parseTransactionFromText(
-  text: string,
+  text: string
 ): Promise<AIChatResponse | null> {
   try {
-    const prompt = `Anda adalah asisten keuangan AI untuk UMKM F&B.
-    Ubah teks input pengguna berikut menjadi data transaksi terstruktur.
-    Jika ada singkatan nominal, jabarkan (misal: "50rb" = 50000).
-    Jika beli bahan baku, berarti pengeluaran (expense). Jika jual atau ada pemasukan, berarti income.        
-
-    Input pengguna: "${text}"`;
-
-    const result = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
+    const prompt = `Anda adalah asisten keuangan AI untuk UMKM F&B. Ubah teks input menuju format JSON sesuai schema. Input: ${text}`;
+    const result = await generativeModel.generateContent({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: 'application/json',
         responseSchema: transactionSchema,
       },
     });
-
-    if (result.text) {
-      const jsonResponse = JSON.parse(result.text) as AIChatResponse;
-      return jsonResponse;
+    const rawText = result.response.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (rawText) {
+      const parsed: unknown = JSON.parse(rawText);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+      return parsed as AIChatResponse;
     }
-
     return null;
-  } catch (error) {
-    console.error("Error parsing transaction via Gemini:", error);
+  } catch {
     return null;
   }
 }
 
-export type ParsedMenu = {
-  name: string;
-  price: number;
-};
+export type ParsedMenu = { name: string; price: number };
 
-const menuListSchema: Schema = {
-  type: Type.ARRAY,
-  description: "Daftar menu beserta harganya",
+// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+const menuListSchema = {
+  type: 'ARRAY',
   items: {
-    type: Type.OBJECT,
+    type: 'OBJECT',
     properties: {
-      name: {
-        type: Type.STRING,
-        description: "Nama menu makanan atau minuman",
-      },
-      price: {
-        type: Type.NUMBER,
-        description: "Harga menu tersebut (dalam Rupiah bulat)",
-      },
+      name: { type: 'STRING' },
+      price: { type: 'NUMBER' },
     },
-    required: ["name", "price"],
+    required: ['name', 'price'],
   },
-};
+} as unknown as Schema;
 
 export async function parseMenusFromImage(
   base64Image: string,
-  mimeType: string,
+  mimeType: string
 ): Promise<ParsedMenu[] | null> {
   try {
-    const prompt =
-      "Ekstrak daftar menu dan harga dari gambar ini. Kembalikan dalam format list nama dan harga. Jika tidak ada harga, asumsikan 0.";
-    const imagePart = {
-      inlineData: {
-        data: base64Image,
-        mimeType,
-      },
-    };
-
-    // In @google/genai, inline data is passed in the contents array either as a string or part object
-    const result = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
-      contents: [prompt, imagePart],
-      config: {
-        responseMimeType: "application/json",
+    const p = 'Ekstrak daftar menu dan harga dari gambar ini.';
+    const img = { inlineData: { data: base64Image, mimeType } };
+    const result = await generativeModel.generateContent({
+      contents: [{ role: 'user', parts: [{ text: p }, img] }],
+      generationConfig: {
+        responseMimeType: 'application/json',
         responseSchema: menuListSchema,
       },
     });
-
-    if (result.text) {
-      return JSON.parse(result.text) as ParsedMenu[];
+    const rawText = result.response.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (rawText) {
+      const parsed: unknown = JSON.parse(rawText);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+      return parsed as ParsedMenu[];
     }
     return null;
-  } catch (error) {
-    console.error("Error parsing menus from image:", error);
+  } catch {
     return null;
   }
 }
