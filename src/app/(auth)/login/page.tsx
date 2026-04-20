@@ -27,10 +27,15 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
+    // Determine the environment dynamically or fall back
+    const redirectUrl = process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:3000/api/auth/callback' 
+      : 'https://ecofin.web.id/api/auth/callback';
+      
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
+        redirectTo: redirectUrl,
       },
     });
   };
