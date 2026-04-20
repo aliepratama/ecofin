@@ -55,7 +55,9 @@ export function ProductManager({
   >;
 }) {
   const [products, setProducts] = useState(initialProducts);
-  const [activeTab, setActiveTab] = useState<"menu" | "bahan_baku">("menu");
+  const [activeTab, setActiveTab] = useState<
+    "menu" | "bahan_baku" | "operasional"
+  >("menu");
   const [isLoading, startTransition] = useTransition();
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -75,7 +77,10 @@ export function ProductManager({
   const [scannedMenus, setScannedMenus] = useState<any[] | null>(null);
   const [isBulkAdding, setIsBulkAdding] = useState(false);
 
-  const menus = products.filter((p) => !p.name.includes("[Bahan Baku]"));
+  const menus = products.filter(
+    (p) =>
+      !p.name.includes("[Bahan Baku]") && !p.name.includes("[Operasional]"),
+  );
   const bahanBaku = products.filter((p) => p.name.includes("[Bahan Baku]"));
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -166,6 +171,8 @@ export function ProductManager({
       const form = new FormData(e.currentTarget);
       if (activeTab === "bahan_baku") {
         form.append("isRawMaterial", "true");
+      } else if (activeTab === "operasional") {
+        form.append("isOperasional", "true");
       }
       // AI Recipe
       if (recipe) {
@@ -391,6 +398,21 @@ export function ProductManager({
           <Package className="h-4 w-4" />
           Bahan Baku
         </button>
+        <button
+          onClick={() => {
+            setActiveTab("operasional");
+            setRecipe(null);
+            setFormData({ name: "", price: "", currentStock: "", unit: "" });
+          }}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-md py-2 text-sm font-medium transition-all ${
+            activeTab === "operasional"
+              ? "bg-background text-primary shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <TrendingDown className="h-4 w-4" />
+          Operasional
+        </button>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
@@ -436,19 +458,28 @@ export function ProductManager({
               <CardTitle>
                 {activeTab === "menu"
                   ? "Tambah Menu Jualan Otomatis (AI)"
-                  : "Tambah Bahan Baku Manual"}
+                  : activeTab === "bahan_baku"
+                    ? "Tambah Bahan Baku Manual"
+                    : "Tambah Operasional Manual"}
               </CardTitle>
               <CardDescription>
                 {activeTab === "menu"
                   ? "Ketik nama menu, lalu biarkan AI membuatkan daftar bahan bakunya."
-                  : "Catat bahan mentah sebagai acuan resep dan pencatatan pengeluaran."}
+                  : activeTab === "bahan_baku"
+                    ? "Catat bahan mentah sebagai acuan resep dan pencatatan pengeluaran."
+                    : "Catat tagihan operasional seperti Sewa, Listrik, Gas, Transportasi."}
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label>
-                    Nama {activeTab === "menu" ? "Menu" : "Bahan Baku"}
+                    Nama{" "}
+                    {activeTab === "menu"
+                      ? "Menu"
+                      : activeTab === "bahan_baku"
+                        ? "Bahan Baku"
+                        : "Operasional"}
                   </Label>
                   <div className="flex gap-2">
                     <Input
@@ -456,7 +487,9 @@ export function ProductManager({
                       placeholder={
                         activeTab === "menu"
                           ? "Contoh: Nasi Goreng Spesial"
-                          : "Contoh: Beras Premium"
+                          : activeTab === "bahan_baku"
+                            ? "Contoh: Beras Premium"
+                            : "Contoh: Tagihan Listrik / Gas"
                       }
                       required
                       value={formData.name}
@@ -503,7 +536,7 @@ export function ProductManager({
                       <option value="Porsi">Porsi</option>
                       <option value="Gelas">Gelas</option>
                     </select>
-                  ) : (
+                  ) : activeTab === "bahan_baku" ? (
                     <select
                       name="unit"
                       className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
@@ -519,6 +552,21 @@ export function ProductManager({
                       <option value="Pcs">Pcs</option>
                       <option value="Box">Box</option>
                       <option value="Pack">Pack</option>
+                    </select>
+                  ) : (
+                    <select
+                      name="unit"
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                      value={formData.unit || "Bulan"}
+                      onChange={(e) => {
+                        setFormData({ ...formData, unit: e.target.value });
+                      }}
+                    >
+                      <option value="Bulan">Per Bulan</option>
+                      <option value="Tahun">Per Tahun</option>
+                      <option value="Lembar">Lembar / Pcs</option>
+                      <option value="Hari">Harian</option>
+                      <option value="Lainnya">Lainnya</option>
                     </select>
                   )}
                 </div>

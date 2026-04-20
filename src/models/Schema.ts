@@ -72,6 +72,7 @@ export const products = pgTable('products', {
   unit: text('unit'),
   type: text('type').default('MENU').notNull(),
   aiRecipe: jsonb('ai_recipe').default([]),
+  isOperasional: integer('is_operasional').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

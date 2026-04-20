@@ -19,6 +19,7 @@ export type ParsedReceiptData = {
   type: "EXPENSE" | "INCOME";
   totalAmount: number;
   items: {
+    category: "BAHAN_BAKU" | "OPERASIONAL";
     name: string;
     rawName?: string;
     quantity: number;
@@ -65,21 +66,38 @@ export async function extractReceiptAction(
   const bahanBakuStr =
     bahanBakuList.length > 0 ? bahanBakuList.join(", ") : "Kosong";
 
-  const prompt = `Anda adalah asisten gudang. Saya memberikan gambar struk/nota belanja bahan baku (pengeluaran).
+  const operasionalList = listProducts
+    .filter((p) => p.type === "OPERASIONAL")
+    .map((b) => b.name);
+  const operasionalStr =
+    operasionalList.length > 0
+      ? operasionalList.join(", ")
+      : "Sewa, Listrik, Gas, Transportasi, Air, Internet, Lainnya";
 
-Penting: Kami memiliki daftar bahan baku di sistem sebagai berikut:
-[${bahanBakuStr}]
+  const prompt = `Anda adalah asisten keuangan pintar. Saya memberikan gambar struk/nota/kuitansi pengeluaran.
+Pengeluaran bisa terdiri dari 2 kategori:
+1. BAHAN_BAKU (terkait erat dengan masakan/bumbu/daging/sayur/kemasan).
+2. OPERASIONAL (tagihan, sewa, listrik, gas, gaji, transportasi, dsb).
 
-Tolong ekstrak informasi dari nota. Jika nama barang di nota tersebut artinya sama, mirip, atau merupakan singkatan dari salah satu bahan di sistem (contoh: "C. Rawit" / "Cabai Rawit" -> "Cabe Rawit"), Anda WAJIB MENGGUNAKAN nama persis yang ada di daftar sistem tersebut. Jika benar-benar baru, gunakan teks asli nota.
+Penting: Kami memiliki daftar item di sistem sebagai berikut:
+Daftar Bahan Baku: [${bahanBakuStr}]
+Daftar Operasional: [${operasionalStr}]
+
+Tolong ekstrak informasi dari nota.
+Aturan Penamaan:
+- Jika nama barang di nota tersebut artinya sama atau mirip dengan bahan baku tercatat (contoh "C. Rawit" -> "Cabe Rawit"), gunakan nama persis dari Daftar Bahan Baku dan set category "BAHAN_BAKU".
+- Jika item tersebut identik dengan tagihan listrik/gas/sewa, klasifikasikan sebagai "OPERASIONAL" dan cocokkan juga ke Daftar Operasional jika mirip.
+- Jika item benar-benar baru, gunakan teks asli nota dan tentukan secara mandiri apakah itu masuk "BAHAN_BAKU" atau "OPERASIONAL".
 
 Ekstrak ke format JSON yang valid (tanpa markdown):
 {
   "totalAmount": angka total (hanya angka bulat, tanpa titik/koma/Rp),
   "items": [
     {
-      "name": "nama bahan baku",
-      "quantity": jumlah bahan (angka bulat, isi 1 jika kosong),
-      "unit": "satuan barang (misal: Kg, Liter, Pcs, Ikat, Bal) jika ada. Jika tidak ada, kembalikan string kosong",
+      "category": "BAHAN_BAKU | OPERASIONAL",
+      "name": "nama item",
+      "quantity": jumlah unit/bulan/barang (angka bulat, isi 1 jika kosong/layanan),
+      "unit": "satuan (Kg, Pcs, Bln, Lb, dll) jika ada. Jika tidak, kosongkan",
       "price": harga satuan,
       "subtotal": harga total item
     }
@@ -96,13 +114,21 @@ Ekstrak ke format JSON yang valid (tanpa markdown):
         items: {
           type: "OBJECT",
           properties: {
+            category: { type: "STRING" },
             name: { type: "STRING" },
             quantity: { type: "NUMBER" },
             unit: { type: "STRING" },
             price: { type: "NUMBER" },
             subtotal: { type: "NUMBER" },
           },
-          required: ["name", "quantity", "unit", "price", "subtotal"],
+          required: [
+            "category",
+            "name",
+            "quantity",
+            "unit",
+            "price",
+            "subtotal",
+          ],
         },
       },
     },
@@ -154,6 +180,7 @@ Ekstrak ke format JSON yang valid (tanpa markdown):
   if (!parsed.items || parsed.items.length === 0) {
     parsed.items = [
       {
+        category: "OPERASIONAL",
         name: "Item dari Nota OCR",
         rawName: "Item dari Nota OCR",
         quantity: 1,
@@ -165,6 +192,7 @@ Ekstrak ke format JSON yang valid (tanpa markdown):
   } else {
     parsed.items = parsed.items.map((it) => ({
       ...it,
+      category: it.category === "BAHAN_BAKU" ? "BAHAN_BAKU" : "OPERASIONAL",
       rawName: it.name,
       quantity: Math.max(1, Math.round(it.quantity || 1)),
       unit: it.unit || "Pcs",
@@ -211,9 +239,15 @@ export async function processReceiptAction(
       .returning();
 
     for (const item of parsed.items) {
-      const finalName = item.name.includes("[Bahan Baku]")
-        ? item.name
-        : `[Bahan Baku] ${item.name}`;
+      const isBahanBaku = item.category === "BAHAN_BAKU";
+      const catPrefix = isBahanBaku ? "[Bahan Baku] " : "[Operasional] ";
+      const catType = isBahanBaku ? "BAHAN_BAKU" : "OPERASIONAL";
+
+      let cleanName = item.name
+        .replace("[Bahan Baku] ", "")
+        .replace("[Operasional] ", "")
+        .trim();
+      const finalName = `${catPrefix}${cleanName}`;
 
       let activeProduct = await tx.query.products.findFirst({
         where: and(
@@ -230,8 +264,8 @@ export async function processReceiptAction(
             name: finalName,
             price: item.price.toString(),
             currentStock: item.quantity,
-            unit: item.unit || "Kg/Liter",
-            type: "BAHAN_BAKU",
+            unit: item.unit || (isBahanBaku ? "Kg/Liter" : "Bulan"),
+            type: catType,
           })
           .returning();
         activeProduct = insertedProduct;

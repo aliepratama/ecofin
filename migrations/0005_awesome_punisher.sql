@@ -1,0 +1,1 @@
+ALTER TABLE "products" ADD COLUMN "is_operasional" integer DEFAULT 0 NOT NULL;

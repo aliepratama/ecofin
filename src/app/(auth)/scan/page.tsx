@@ -189,7 +189,13 @@ export default function ScanReceiptPage() {
     if (!extractedData) return;
     const items = [
       ...extractedData.items,
-      { name: "", quantity: 1, price: 0, subtotal: 0 },
+      {
+        name: "",
+        category: "BAHAN_BAKU" as const,
+        quantity: 1,
+        price: 0,
+        subtotal: 0,
+      },
     ];
     setExtractedData({ ...extractedData, items });
   };

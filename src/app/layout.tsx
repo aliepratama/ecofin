@@ -10,25 +10,22 @@ export const metadata: Metadata = {
   title: 'Ecofin',
   description: 'Manage your expenses and financial tracking with ease.',
   manifest: '/icons_and_manifest/manifest.json',
-  icons: [
-    {
-      rel: 'apple-touch-icon',
-      url: '/icons_and_manifest/icons/apple-touch-icon.png',
-    },
-    {
-      rel: 'icon',
-      type: 'image/png',
-      sizes: '32x32',
-      url: '/icons_and_manifest/icons/favicon-32x32.png',
-    },
-    {
-      rel: 'icon',
-      type: 'image/png',
-      sizes: '16x16',
-      url: '/icons_and_manifest/icons/favicon-16x16.png',
-    },
-    { rel: 'icon', url: '/icons_and_manifest/icons/favicon.ico' },
-  ],
+  icons: {
+    icon: [
+      {
+        url: '/icons_and_manifest/icons/favicon-16x16.png',
+        sizes: '16x16',
+        type: 'image/png',
+      },
+      {
+        url: '/icons_and_manifest/icons/favicon-32x32.png',
+        sizes: '32x32',
+        type: 'image/png',
+      },
+    ],
+    apple: [{ url: '/icons_and_manifest/icons/apple-touch-icon.png' }],
+    shortcut: ['/icons_and_manifest/icons/apple-touch-icon.png'],
+  },
 };
 export const viewport: Viewport = {
   width: 'device-width',

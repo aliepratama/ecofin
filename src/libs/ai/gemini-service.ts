@@ -36,46 +36,85 @@ export type ChatItem = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
-const transactionSchema = {
+const aiChatResponseSchema = {
   type: 'OBJECT',
   properties: {
-    type: { type: 'STRING', enum: ['INCOME', 'EXPENSE'] },
-    amount: { type: 'NUMBER' },
-    description: { type: 'STRING' },
-    items: {
-      type: 'ARRAY',
-      items: {
-        type: 'OBJECT',
-        properties: {
-          itemName: { type: 'STRING' },
-          price: { type: 'NUMBER' },
-          quantity: { type: 'NUMBER' },
-          unit: { type: 'STRING' },
+    isAmbiguous: { type: 'BOOLEAN' },
+    clarificationMessage: {
+      type: 'STRING',
+      description:
+        'Tuliskan klarifikasi atau rekomendasi perbaikan seperti "Maksud anda, apakah saya harus ... ?" dalam bahasa Indonesia yang ramah.',
+    },
+    transaction: {
+      type: 'OBJECT',
+      properties: {
+        type: { type: 'STRING', enum: ['INCOME', 'EXPENSE'] },
+        amount: { type: 'NUMBER' },
+        description: { type: 'STRING' },
+        items: {
+          type: 'ARRAY',
+          items: {
+            type: 'OBJECT',
+            properties: {
+              itemName: { type: 'STRING' },
+              price: { type: 'NUMBER' },
+              quantity: { type: 'NUMBER' },
+              unit: { type: 'STRING' },
+            },
+            required: ['itemName', 'quantity'],
+          },
         },
-        required: ['itemName', 'quantity'],
       },
+      required: ['type', 'amount', 'description'],
     },
   },
-  required: ['type', 'amount', 'description'],
+  required: ['isAmbiguous'],
 } as unknown as Schema;
 
 export type AIChatResponse = {
-  type: 'INCOME' | 'EXPENSE';
-  amount: number;
-  description: string;
-  items?: ChatItem[];
+  isAmbiguous: boolean;
+  clarificationMessage?: string;
+  transaction?: {
+    type: 'INCOME' | 'EXPENSE';
+    amount: number;
+    description: string;
+    items?: ChatItem[];
+  };
 };
 
 export async function parseTransactionFromText(
-  text: string
+  history: { role: 'user' | 'model'; text: string }[],
+  latestInput: string
 ): Promise<AIChatResponse | null> {
   try {
-    const prompt = `Anda adalah asisten keuangan AI untuk UMKM F&B. Ubah teks input menuju format JSON sesuai schema. Input: ${text}`;
+    const systemPrompt = `Anda adalah asisten keuangan AI untuk UMKM F&B. Analisis histori percakapan berikut.
+Jika perintah atau informasinya sudah cukup lengkap dan jelas untuk mulai dicatat sebagai transaksi (ada jenis, jumlah, dsb), ubah isAmbiguous = false, dan lengkapi detail transaction.
+Namun jika masih ambigu atau kekurangan info (misalnya baru bilang "mau catat pengeluaran" tanpa jumlah/barang, atau harganya kurang jelas), ubah isAmbiguous = true, dan berikan pertanyaan klarifikasi pada clarificationMessage untuk meminta user melengkapi informasinya.`;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const contents: any[] = [
+      { role: 'user', parts: [{ text: systemPrompt }] },
+      {
+        role: 'model',
+        parts: [{ text: 'Baik, saya siap menganalisis percakapan.' }],
+      },
+    ];
+
+    for (const msg of history) {
+      if (msg.text) {
+        // filter internal status bubble texts
+        if (msg.text === 'Sedang memikir...') {continue;}
+        contents.push({ role: msg.role, parts: [{ text: msg.text }] });
+      }
+    }
+
+    contents.push({ role: 'user', parts: [{ text: latestInput }] });
+
     const result = await generativeModel.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      contents,
       generationConfig: {
         responseMimeType: 'application/json',
-        responseSchema: transactionSchema,
+        responseSchema: aiChatResponseSchema,
       },
     });
     const rawText = result.response.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -85,15 +124,16 @@ export async function parseTransactionFromText(
       return parsed as AIChatResponse;
     }
     return null;
-  } catch {
+  } catch (error) {
+    console.error('Gemini Error:', error);
     return null;
   }
 }
 
 export type ParsedMenu = { name: string; price: number };
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
-const menuListSchema = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const menuListSchema: Record<string, any> = {
   type: 'ARRAY',
   items: {
     type: 'OBJECT',
@@ -103,7 +143,7 @@ const menuListSchema = {
     },
     required: ['name', 'price'],
   },
-} as unknown as Schema;
+};
 
 export async function parseMenusFromImage(
   base64Image: string,
